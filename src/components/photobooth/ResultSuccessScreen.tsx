@@ -80,10 +80,9 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
                 level="M"
               />
             </div>
-            <div className="space-y-1">
-              <span className="text-xs text-black font-black uppercase block">SCAN QR UNTUK DOWNLOAD</span>
-              <span className="text-[10px] text-black font-mono font-bold block truncate max-w-[180px]">
-                {qrUrl}
+            <div>
+              <span className="text-xs text-black font-black uppercase block tracking-wider">
+                SCAN QR UNTUK DOWNLOAD
               </span>
             </div>
           </div>
