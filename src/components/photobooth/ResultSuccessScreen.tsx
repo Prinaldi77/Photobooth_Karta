@@ -41,7 +41,7 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
             FOTO KAMU SIAP DIDOWNLOAD!
           </h2>
           <p className="text-slate-800 text-sm sm:text-base font-bold">
-            Scan QR Code dengan kamera smartphone kamu untuk melihat & mendownload foto HD.
+            Scan QR Code dengan kamera smartphone kamu untuk melihat & mendownload foto Ultra HD.
           </p>
         </div>
 
@@ -81,34 +81,15 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
-          <motion.a
+        {/* Action Button: Single "🚀 SESI BARU" button on Laptop */}
+        <div className="pt-4 flex justify-center">
+          <motion.button
             whileHover={{ scale: 1.03, x: -3, y: -3 }}
             whileTap={{ scale: 0.97, x: 3, y: 3 }}
-            href={qrUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-8 py-4 rounded-2xl bg-[#0052FF] hover:bg-[#0046DB] text-white font-black text-lg border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 cursor-pointer uppercase transition-all"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-            <span>Buka Halaman Download</span>
-          </motion.a>
-
-          <motion.button
-            whileHover={{ scale: 1.03, x: -2, y: -2 }}
-            whileTap={{ scale: 0.97, x: 2, y: 2 }}
             onClick={onNewSession}
-            className="px-8 py-4 rounded-2xl bg-slate-200 hover:bg-slate-300 text-black font-black text-lg border-3 border-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 cursor-pointer uppercase transition-all"
+            className="w-full sm:w-auto px-12 py-4.5 rounded-2xl bg-[#0052FF] hover:bg-[#0046DB] text-white font-black text-xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-3 cursor-pointer uppercase transition-all"
           >
-            <span>🚀 Sesi Baru</span>
+            <span>🚀 MULAI SESI BARU</span>
           </motion.button>
         </div>
       </div>

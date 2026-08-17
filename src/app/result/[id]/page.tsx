@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import { Photo } from '@/types/photobooth';
 
@@ -94,8 +93,8 @@ export default async function ResultPage({
               💡 Tekan tombol di bawah atau tahan gambarnya untuk simpan ke Galeri HP!
             </p>
 
-            {/* Mobile Action Buttons */}
-            <div className="flex flex-col gap-3 pt-2">
+            {/* Mobile Action Button ONLY (No New Session button on HP) */}
+            <div className="pt-2">
               <a
                 href={forceDownloadUrl}
                 download={`photobooth-karta-81-${id.slice(0, 8)}.jpg`}
@@ -111,13 +110,6 @@ export default async function ResultPage({
                 </svg>
                 <span>📥 DOWNLOAD / SIMPAN FOTO (ULTRA HD)</span>
               </a>
-
-              <Link
-                href="/photobooth"
-                className="w-full py-3.5 rounded-2xl bg-slate-200 hover:bg-slate-300 text-black font-black text-sm border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 uppercase transition-all"
-              >
-                <span>🚀 MULAI SESI BARU</span>
-              </Link>
             </div>
           </div>
         )}
