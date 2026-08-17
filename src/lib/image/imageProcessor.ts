@@ -24,7 +24,7 @@ async function loadImage(source: string | Blob): Promise<HTMLImageElement> {
 
 /**
  * Composites 1 to 3 raw photo Blobs with static or SVG frame templates on HTMLCanvasElement.
- * Produces a high-quality Ultra HD master image (~3.5MB - 4MB) and a downscaled preview derivative.
+ * Produces a high-quality 13.5 Megapixel Ultra HD master image (~3.5MB - 4.5MB) and a downscaled preview derivative.
  */
 export async function compositePhotoWithFrame(
   photoInput: Blob | Blob[],
@@ -39,11 +39,11 @@ export async function compositePhotoWithFrame(
   // Load all photo Blobs into Image elements
   const photoImages = await Promise.all(photoBlobs.map((blob) => loadImage(blob)));
 
-  // Ultra HD Master Canvas Dimensions (2400 x 3600 px for ~3.5MB - 4MB JPEG size)
-  const masterWidth = 2400;
-  const masterHeight = 3600;
+  // Ultra HD Master Canvas Dimensions (3000 x 4500 px / 13.5 MP for true ~3.5MB - 4.5MB file size)
+  const masterWidth = 3000;
+  const masterHeight = 4500;
 
-  // 1. Create Master Canvas (Portrait 2400 x 3600)
+  // 1. Create Master Canvas (Portrait 3000 x 4500)
   const masterCanvas = document.createElement('canvas');
   masterCanvas.width = masterWidth;
   masterCanvas.height = masterHeight;
@@ -59,23 +59,23 @@ export async function compositePhotoWithFrame(
 
   // If using Karang Taruna Twin Strip 3-Pose SVG Overlay Frame
   if (frame?.overlayUrl && (frame.id.includes('karta') || frame.overlayUrl.includes('karta'))) {
-    // Twin Strip Slot Coordinates (Scaled 2x for 2400 x 3600 Ultra HD):
-    // Left Strip:  Pose 1 (140, 1040), Pose 2 (140, 1780), Pose 3 (140, 2520) - Size: 920 x 680
-    // Right Strip: Pose 1 (1340, 200), Pose 2 (1340, 940), Pose 3 (1340, 1680) - Size: 920 x 680
-    const slotWidth = 920;
-    const slotHeight = 680;
-    const borderRadius = 72;
+    // Twin Strip Slot Coordinates (Scaled 2.5x for 3000 x 4500 Ultra HD 13.5MP):
+    // Left Strip:  Pose 1 (175, 1300), Pose 2 (175, 2225), Pose 3 (175, 3150) - Size: 1150 x 850
+    // Right Strip: Pose 1 (1675, 250), Pose 2 (1675, 1175), Pose 3 (1675, 2100) - Size: 1150 x 850
+    const slotWidth = 1150;
+    const slotHeight = 850;
+    const borderRadius = 90;
 
     const leftSlots = [
-      { x: 140, y: 1040 },
-      { x: 140, y: 1780 },
-      { x: 140, y: 2520 },
+      { x: 175, y: 1300 },
+      { x: 175, y: 2225 },
+      { x: 175, y: 3150 },
     ];
 
     const rightSlots = [
-      { x: 1340, y: 200 },
-      { x: 1340, y: 940 },
-      { x: 1340, y: 1680 },
+      { x: 1675, y: 250 },
+      { x: 1675, y: 1175 },
+      { x: 1675, y: 2100 },
     ];
 
     // Function to draw clipped rounded photo with portrait center cropping into slot
@@ -129,27 +129,27 @@ export async function compositePhotoWithFrame(
     ctx.drawImage(img, 0, 0, masterWidth, masterHeight);
 
     if (frame?.borderColor) {
-      const borderWidth = Math.max(24, Math.round(masterWidth * 0.025));
+      const borderWidth = Math.max(30, Math.round(masterWidth * 0.025));
       ctx.strokeStyle = frame.borderColor;
       ctx.lineWidth = borderWidth;
       ctx.strokeRect(borderWidth / 2, borderWidth / 2, masterWidth - borderWidth, masterHeight - borderWidth);
     }
 
     if (frame?.badgeText) {
-      const fontSize = Math.max(28, Math.round(masterWidth * 0.022));
+      const fontSize = Math.max(36, Math.round(masterWidth * 0.022));
       ctx.font = `bold ${fontSize}px sans-serif`;
       ctx.fillStyle = '#ffffff';
       ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-      ctx.shadowBlur = 16;
-      ctx.shadowOffsetX = 4;
-      ctx.shadowOffsetY = 4;
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetX = 5;
+      ctx.shadowOffsetY = 5;
 
-      const padding = 48;
+      const padding = 60;
       ctx.fillText(frame.badgeText, padding, masterHeight - padding);
     }
   }
 
-  // Export Ultra HD Master Blob (JPEG quality 0.98, ~3.5MB - 4MB file size)
+  // Export Ultra HD Master Blob (Maximum JPEG quality 1.0, ~3.5MB - 4.5MB file size)
   const masterBlob = await new Promise<Blob>((resolve, reject) => {
     masterCanvas.toBlob(
       (blob) => {
@@ -160,7 +160,7 @@ export async function compositePhotoWithFrame(
         }
       },
       'image/jpeg',
-      0.98
+      1.0
     );
   });
 
