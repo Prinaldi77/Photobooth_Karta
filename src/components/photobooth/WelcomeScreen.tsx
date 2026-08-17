@@ -36,8 +36,21 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
           🇲🇨 HUT RI 81 KARTA 02 SPECIAL
         </motion.div>
 
-        {/* Main Title Section */}
-        <div className="space-y-4 pt-2">
+        {/* Main Title Section with Official Logo */}
+        <div className="space-y-4 pt-2 flex flex-col items-center text-center">
+          {/* Official Karang Taruna FKPGR 02 Logo */}
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: 2 }}
+            className="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-2xl border-4 border-black p-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center mx-auto"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-karta.png"
+              alt="Logo Karang Taruna FKPGR 02"
+              className="w-full h-full object-contain"
+            />
+          </motion.div>
+
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-[#0052FF] text-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             <span className="w-2.5 h-2.5 rounded-full bg-[#00E676] animate-ping border border-black"></span>
             KARANG TARUNA FKPGR 02 PHOTOBOOTH DIGITAL
@@ -51,7 +64,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
           </h1>
 
           <p className="text-slate-800 text-base sm:text-lg font-bold max-w-2xl mx-auto leading-relaxed">
-            Sentuh tombol sekali di bawah atau angkat <strong className="bg-[#FF3366] text-white px-2 py-0.5 rounded border border-black font-black">Gestur Tangan 5 🖐️</strong> di depan kamera untuk jepret foto otomatis!
+            Sentuh tombol di bawah atau angkat <strong className="bg-[#FF3366] text-white px-2 py-0.5 rounded border border-black font-black">Gestur Tangan 5 🖐️</strong> di depan kamera untuk jepret foto otomatis!
           </p>
         </div>
 
@@ -89,7 +102,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
             <div className="text-2xl font-black">📸 ULTRA HD 4K</div>
             <h3 className="font-black text-sm uppercase">Kualitas Studio</h3>
             <p className="text-xs font-bold text-white/90 leading-snug">
-              Hasil foto resolusi tinggi 2400x3600 px (4MB) jernih untuk cetak 4R.
+              Hasil foto resolusi tinggi 3000x4500 px (4MB) jernih untuk cetak 4R.
             </p>
           </motion.div>
 

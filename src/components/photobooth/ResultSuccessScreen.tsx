@@ -32,8 +32,16 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
       className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-4xl mx-auto px-4 text-center select-none space-y-8"
     >
       <div className="bg-[#FFFDF5] border-4 border-black p-8 sm:p-10 rounded-3xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-8 w-full text-black">
-        {/* Header */}
-        <div className="space-y-2">
+        {/* Header with Official Karang Taruna FKPGR 02 Logo */}
+        <div className="space-y-3 flex flex-col items-center">
+          <div className="w-16 h-16 bg-white rounded-2xl border-3 border-black p-1.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-karta.png"
+              alt="Logo Karang Taruna FKPGR 02"
+              className="w-full h-full object-contain"
+            />
+          </div>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#00E676] text-black border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             ✓ SESI SELESAI {sessionCode ? `(${sessionCode})` : ''}
           </div>
