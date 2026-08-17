@@ -49,7 +49,7 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
             FOTO KAMU SIAP DIDOWNLOAD!
           </h2>
           <p className="text-slate-800 text-sm sm:text-base font-bold">
-            Scan QR Code dengan kamera smartphone kamu untuk melihat & mendownload foto Ultra HD.
+            Scan QR Code dengan kamera smartphone kamu untuk melihat & mendownload foto framenya!
           </p>
         </div>
 
