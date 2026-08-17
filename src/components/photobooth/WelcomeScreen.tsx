@@ -38,10 +38,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
 
         {/* Main Title Section with Official Logo */}
         <div className="space-y-4 pt-2 flex flex-col items-center text-center">
-          {/* Official Karang Taruna FKPGR 02 Logo */}
+          {/* Official Karang Taruna FKPGR 02 Cropped Square Logo Emblem */}
           <motion.div
             whileHover={{ scale: 1.05, rotate: 2 }}
-            className="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-2xl border-4 border-black p-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center mx-auto"
+            className="w-32 h-32 sm:w-40 sm:h-40 bg-white rounded-3xl border-4 border-black p-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center mx-auto"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
