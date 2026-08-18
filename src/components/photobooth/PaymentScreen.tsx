@@ -22,54 +22,66 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'qris' | 'cash'>('qris');
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Real-time listener from Operator Smartphone ACC signal via Supabase Broadcast / DB Channel
+  // Real-time listener from Operator Smartphone ACC signal via Supabase Broadcast Channel
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) return;
 
-    const channelName = `session_payment_${sessionCode || sessionId || 'default'}`;
-    const channel = supabase.channel(channelName);
+    const channelNames = [
+      'session_payment_default',
+      `session_payment_${sessionCode || sessionId || 'default'}`,
+    ];
 
-    channel
-      .on('broadcast', { event: 'payment_approved' }, () => {
-        setIsVerifying(true);
-        setTimeout(() => {
-          onPaymentSuccess();
-        }, 500);
-      })
-      .subscribe();
+    const channels = channelNames.map((name) => {
+      const channel = supabase.channel(name);
+
+      channel
+        .on('broadcast', { event: 'payment_approved' }, () => {
+          setIsVerifying(true);
+          setTimeout(() => {
+            onPaymentSuccess();
+          }, 400);
+        })
+        .on('broadcast', { event: 'reset_session' }, () => {
+          onBackToRetake();
+        })
+        .subscribe();
+
+      return channel;
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      channels.forEach((ch) => supabase.removeChannel(ch));
     };
-  }, [sessionCode, sessionId, onPaymentSuccess]);
-
-  const handleManualApprove = () => {
-    setIsVerifying(true);
-    setTimeout(() => {
-      onPaymentSuccess();
-    }, 600);
-  };
+  }, [sessionCode, sessionId, onPaymentSuccess, onBackToRetake]);
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.94, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-      className="flex flex-col items-center justify-center min-h-[85vh] w-full max-w-5xl mx-auto px-4 text-center select-none py-6"
+      className="flex flex-col items-center justify-center min-h-[85vh] w-full max-w-5xl mx-auto px-4 text-center select-none py-6 font-sans"
     >
       <div className="bg-[#FFFDF5] border-4 border-black p-6 sm:p-10 rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-8 w-full text-black">
         {/* Header */}
         <div className="space-y-3 flex flex-col items-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#0052FF] text-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             <span>5. HALAMAN PEMBAYARAN SESI</span>
-            {sessionCode && <span className="bg-[#FFE600] text-black px-2 py-0.5 rounded font-mono border border-black">#{sessionCode}</span>}
+            {sessionCode && (
+              <span className="bg-[#FFE600] text-black px-2 py-0.5 rounded font-mono border border-black">
+                #{sessionCode}
+              </span>
+            )}
           </div>
           <h2 className="text-3xl sm:text-5xl font-black text-black uppercase tracking-tight">
             LANJUTKAN PEMBAYARAN
           </h2>
           <p className="text-slate-800 text-sm sm:text-base font-bold">
-            Pilih metode pembayaran sebesar <span className="bg-[#FFE600] px-2 py-0.5 rounded border border-black font-black">Rp 7.000</span> untuk membuka QR Download HP.
+            Pilih metode pembayaran sebesar{' '}
+            <span className="bg-[#FFE600] px-2.5 py-0.5 rounded-md border border-black font-black text-black">
+              Rp 7.000
+            </span>{' '}
+            untuk membuka QR Download HP.
           </p>
         </div>
 
@@ -131,7 +143,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
             {/* Selected Method Display */}
             {paymentMethod === 'qris' ? (
               <div className="bg-[#0052FF] p-6 rounded-2xl border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-white text-center space-y-4">
-                <div className="bg-white p-3 rounded-xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] inline-block mx-auto max-w-[260px]">
+                <div className="bg-white p-3.5 rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] inline-block mx-auto max-w-[280px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/qris-karta.png"
@@ -140,7 +152,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <span className="text-xl font-black block uppercase text-[#FFE600]">TARIF SESI: RP 7.000</span>
+                  <span className="text-xl font-black block uppercase text-[#FFE600]">
+                    TARIF SESI: RP 7.000
+                  </span>
                   <p className="text-xs font-bold text-white/90">
                     Scan kode QRIS DANA di atas menggunakan aplikasi m-banking atau e-wallet (DANA, GoPay, OVO, ShopeePay, dll).
                   </p>
@@ -160,29 +174,17 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               </div>
             )}
 
-            {/* Waiting for Operator Status Box */}
-            <div className="bg-white p-4 rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 text-left">
-                <div className="w-4 h-4 rounded-full bg-[#FFE600] animate-ping border border-black flex-shrink-0"></div>
-                <div>
-                  <span className="text-xs font-black text-black block uppercase">
-                    {isVerifying ? '✓ VERIFIKASI PEMBAYARAN LUNAS...' : '⏳ MENUNGGU KONFIRMASI OPERATOR HP'}
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-600">
-                    Panitia akan menekan tombol ACC dari HP Operator setelah pembayaran diterima.
-                  </span>
-                </div>
+            {/* Waiting for Operator Status Box (No Bypass Button on Laptop) */}
+            <div className="bg-white p-5 rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4">
+              <div className="w-4 h-4 rounded-full bg-[#FFE600] animate-ping border border-black flex-shrink-0"></div>
+              <div className="text-left">
+                <span className="text-xs sm:text-sm font-black text-black block uppercase">
+                  {isVerifying ? '✓ VERIFIKASI PEMBAYARAN LUNAS...' : '⏳ MENUNGGU KONFIRMASI OPERATOR HP'}
+                </span>
+                <span className="text-[11px] sm:text-xs font-bold text-slate-600">
+                  Panitia Karang Taruna akan menekan konfirmasi dari HP Operator setelah pembayaran diterima.
+                </span>
               </div>
-
-              {/* Operator Quick Pass Trigger (Fallback on laptop screen) */}
-              <button
-                type="button"
-                onClick={handleManualApprove}
-                disabled={isVerifying}
-                className="px-4 py-2 bg-[#00E676] hover:bg-[#00C853] text-black font-black text-xs rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase flex-shrink-0 cursor-pointer transition-all"
-              >
-                {isVerifying ? 'LUNAS...' : 'ACC PETUGAS'}
-              </button>
             </div>
 
             {/* Back Button */}
