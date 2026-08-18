@@ -140,13 +140,13 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               </button>
             </div>
 
-            {/* Selected Method Display */}
+            {/* Selected Method Display (WebP Optimized) */}
             {paymentMethod === 'qris' ? (
               <div className="bg-[#0052FF] p-6 rounded-2xl border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-white text-center space-y-4">
                 <div className="bg-white p-3.5 rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] inline-block mx-auto max-w-[280px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/qris-karta.png"
+                    src="/qris-karta.webp"
                     alt="QRIS DANA Karang Taruna FKPGR 02 Rp 7.000"
                     className="w-full h-auto max-h-[340px] object-contain rounded-lg"
                   />

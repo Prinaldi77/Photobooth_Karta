@@ -38,14 +38,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
 
         {/* Main Title Section with Official Logo */}
         <div className="space-y-4 pt-2 flex flex-col items-center text-center">
-          {/* Official Karang Taruna FKPGR 02 Cropped Square Logo Emblem */}
+          {/* Official Karang Taruna FKPGR 02 Cropped Square Logo Emblem (Optimized WebP) */}
           <motion.div
             whileHover={{ scale: 1.05, rotate: 2 }}
             className="w-32 h-32 sm:w-40 sm:h-40 bg-white rounded-3xl border-4 border-black p-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center mx-auto"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo-karta.png"
+              src="/logo-karta.webp"
               alt="Logo Karang Taruna FKPGR 02"
               className="w-full h-full object-contain"
             />
@@ -94,15 +94,15 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
             </p>
           </motion.div>
 
-          {/* Card 3: Ultra HD 4K */}
+          {/* Card 3: Ultra HD Studio */}
           <motion.div
             whileHover={{ y: -4, scale: 1.02 }}
             className="bg-[#FF3366] text-white p-4 rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-1.5"
           >
-            <div className="text-2xl font-black">📸 ULTRA HD 4K</div>
-            <h3 className="font-black text-sm uppercase">Kualitas Studio</h3>
+            <div className="text-2xl font-black">📸 STUDIO HD</div>
+            <h3 className="font-black text-sm uppercase">Kualitas Cetak</h3>
             <p className="text-xs font-bold text-white/90 leading-snug">
-              Hasil foto resolusi tinggi 3000x4500 px (4MB) jernih untuk cetak 4R.
+              Hasil foto resolusi tinggi 2400x3600 px jernih untuk cetak 4R.
             </p>
           </motion.div>
 
