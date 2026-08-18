@@ -7,6 +7,7 @@ import { useHandGesture } from '@/hooks/useHandGesture';
 import { FrameTemplate, ProcessedImageResult } from '@/lib/image/types';
 import { STATIC_FRAMES } from '@/lib/image/frames';
 import { compositePhotoWithFrame, revokeProcessedImageUrls } from '@/lib/image/imageProcessor';
+import { getSupabaseClient } from '@/lib/supabase';
 import { WelcomeScreen } from './WelcomeScreen';
 import { CameraPermissionScreen } from './CameraPermissionScreen';
 import { CameraPreviewScreen } from './CameraPreviewScreen';
@@ -56,6 +57,57 @@ export const PhotoboothContainer: React.FC = () => {
       }
     };
   }, [processedResult, currentPosePreviewUrl]);
+
+  // Reset Session -> Stop camera tracks, clear state & return to IDLE (Welcome Screen)
+  const handleResetSession = useCallback(async () => {
+    if (cameraAdapterRef.current) {
+      await cameraAdapterRef.current.stop();
+    }
+    setRawPhotoBlobs([]);
+    setCurrentPoseIndex(1);
+    setCurrentPosePreviewUrl(null);
+    setProcessedResult((prev) => {
+      revokeProcessedImageUrls(prev);
+      return null;
+    });
+    setCurrentSession(null);
+    setUploadedPhoto(null);
+    setErrorMessage(undefined);
+    setCurrentState('IDLE');
+  }, []);
+
+  // Top-level Supabase Realtime Broadcast listener for Remote ACC and Remote Reset from Operator HP
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+
+    const channelNames = [
+      'session_payment_default',
+      currentSession?.session_code ? `session_payment_${currentSession.session_code}` : null,
+      currentSession?.id ? `session_payment_${currentSession.id}` : null,
+    ].filter(Boolean) as string[];
+
+    const channels = channelNames.map((name) => {
+      const channel = supabase.channel(name);
+
+      channel
+        .on('broadcast', { event: 'payment_approved' }, () => {
+          console.log('[PhotoboothContainer] Sinyal Remote ACC diterima! Pindah ke SUCCESS...');
+          setCurrentState('SUCCESS');
+        })
+        .on('broadcast', { event: 'reset_session' }, () => {
+          console.log('[PhotoboothContainer] Sinyal Remote Reset diterima! Kembali ke IDLE...');
+          handleResetSession();
+        })
+        .subscribe();
+
+      return channel;
+    });
+
+    return () => {
+      channels.forEach((ch) => supabase.removeChannel(ch));
+    };
+  }, [currentSession, handleResetSession]);
 
   // Step 1: 1-Click Instant Camera Start -> Create session & Start Camera immediately
   const handleStartCamera = useCallback(async () => {
@@ -295,24 +347,6 @@ export const PhotoboothContainer: React.FC = () => {
   const handlePaymentApproved = useCallback(() => {
     setCurrentState('SUCCESS');
   }, []);
-
-  // Reset Session -> Stop camera tracks, clear state & return to IDLE
-  const handleResetSession = async () => {
-    if (cameraAdapterRef.current) {
-      await cameraAdapterRef.current.stop();
-    }
-    setRawPhotoBlobs([]);
-    setCurrentPoseIndex(1);
-    setCurrentPosePreviewUrl(null);
-    setProcessedResult((prev) => {
-      revokeProcessedImageUrls(prev);
-      return null;
-    });
-    setCurrentSession(null);
-    setUploadedPhoto(null);
-    setErrorMessage(undefined);
-    setCurrentState('IDLE');
-  };
 
   return (
     <main className="min-h-screen bg-[#FFFDF5] text-black flex flex-col items-center justify-center p-4 sm:p-8 select-none">
