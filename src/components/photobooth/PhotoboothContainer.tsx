@@ -11,6 +11,7 @@ import { WelcomeScreen } from './WelcomeScreen';
 import { CameraPermissionScreen } from './CameraPermissionScreen';
 import { CameraPreviewScreen } from './CameraPreviewScreen';
 import { CaptureReviewScreen } from './CaptureReviewScreen';
+import { PaymentScreen } from './PaymentScreen';
 import { ResultSuccessScreen } from './ResultSuccessScreen';
 
 export const PhotoboothContainer: React.FC = () => {
@@ -232,7 +233,7 @@ export const PhotoboothContainer: React.FC = () => {
     setCurrentState('READY');
   };
 
-  // Upload photo to backend API (POST /api/photos/upload)
+  // Upload photo to backend API (POST /api/photos/upload) then navigate to PAYMENT screen
   const handleUploadPhoto = useCallback(async () => {
     if (!processedResult || !currentSession) {
       setErrorMessage('Sesi atau foto belum siap untuk diunggah.');
@@ -273,13 +274,19 @@ export const PhotoboothContainer: React.FC = () => {
       }
 
       setUploadedPhoto(json.data);
-      setCurrentState('SUCCESS');
+      // Advance to PAYMENT Screen (Step 4 & 5)
+      setCurrentState('PAYMENT');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal mengunggah foto.';
       setErrorMessage(msg);
       setCurrentState('UPLOAD_ERROR');
     }
   }, [processedResult, currentSession, selectedFrame]);
+
+  // Payment Confirmation Success Callback -> Advance to SUCCESS
+  const handlePaymentApproved = useCallback(() => {
+    setCurrentState('SUCCESS');
+  }, []);
 
   // Reset Session -> Stop camera tracks, clear state & return to IDLE
   const handleResetSession = async () => {
@@ -366,7 +373,7 @@ export const PhotoboothContainer: React.FC = () => {
           <div className="space-y-2">
             <h3 className="text-2xl font-black uppercase">Mengunggah Foto...</h3>
             <p className="text-slate-800 text-sm font-bold">
-              Foto master 3 pose dan metadata sedang dikirim ke server backend.
+              Foto master 3 pose sedang dikirim, menyiapkan Halaman Pembayaran.
             </p>
           </div>
         </div>
@@ -401,6 +408,18 @@ export const PhotoboothContainer: React.FC = () => {
         </div>
       )}
 
+      {/* Step 5: PAYMENT Screen */}
+      {currentState === 'PAYMENT' && (
+        <PaymentScreen
+          imageSrc={processedResult?.previewUrl || null}
+          sessionCode={currentSession?.session_code}
+          sessionId={currentSession?.id}
+          onPaymentSuccess={handlePaymentApproved}
+          onBackToRetake={handleRetakeAll}
+        />
+      )}
+
+      {/* Step 6: SUCCESS Screen (QR Code Download HP) */}
       {currentState === 'SUCCESS' && (
         <ResultSuccessScreen
           imageSrc={processedResult?.masterUrl || processedResult?.previewUrl || null}

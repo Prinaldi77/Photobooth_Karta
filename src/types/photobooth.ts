@@ -7,6 +7,7 @@ export type PhotoboothState =
   | 'REVIEW'
   | 'PROCESSING'
   | 'UPLOADING'
+  | 'PAYMENT'
   | 'SUCCESS'
   | 'CAMERA_ERROR'
   | 'PROCESSING_ERROR'

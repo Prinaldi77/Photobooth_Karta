@@ -7,6 +7,7 @@ import { useHandGesture } from '@/hooks/useHandGesture';
 import { STATIC_FRAMES } from '@/lib/image/frames';
 import { FrameTemplate } from '@/lib/image/types';
 import { compositePhotoWithFrame } from '@/lib/image/imageProcessor';
+import { getSupabaseClient } from '@/lib/supabase';
 
 type CameraStatus =
   | 'IDLE'
@@ -36,6 +37,10 @@ export default function OperatorPage() {
   const [captureCount, setCaptureCount] = useState<number>(0);
   const [currentSessionId, setCurrentSessionId] = useState<string>('00000000-0000-4000-a000-000000000001');
 
+  // ACC Remote Confirmation State for Operator Phone
+  const [accSuccessMessage, setAccSuccessMessage] = useState<string | null>(null);
+  const [isSendingAcc, setIsSendingAcc] = useState<boolean>(false);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -43,6 +48,40 @@ export default function OperatorPage() {
 
   // Initialize Supabase Realtime Signaling for OPERATOR role
   const { channelStatus, peerOnline, sendSignal, onMessage } = useBoothSignaling('OPERATOR');
+
+  // Trigger Remote Payment ACC Broadcast to Laptop from Operator Phone
+  const handleApprovePaymentRemote = useCallback(async () => {
+    setIsSendingAcc(true);
+    setAccSuccessMessage(null);
+
+    try {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        // Broadcast to all active payment channels
+        const channelNames = [
+          'session_payment_default',
+          `session_payment_${currentSessionId}`,
+        ];
+
+        for (const name of channelNames) {
+          const ch = supabase.channel(name);
+          await ch.subscribe();
+          await ch.send({
+            type: 'broadcast',
+            event: 'payment_approved',
+            payload: { timestamp: Date.now() },
+          });
+        }
+      }
+
+      setAccSuccessMessage('✓ LUNAS! Sinyal ACC Rp 7.000 terkirim ke laptop!');
+      setTimeout(() => setAccSuccessMessage(null), 4000);
+    } catch (err) {
+      console.error('Failed to broadcast ACC signal:', err);
+    } finally {
+      setIsSendingAcc(false);
+    }
+  }, [currentSessionId]);
 
   // Stop active local camera stream
   const stopCameraStream = useCallback(() => {
@@ -349,6 +388,44 @@ export default function OperatorPage() {
   return (
     <main className="min-h-screen bg-[#FFFDF5] text-black p-4 sm:p-8 flex flex-col items-center justify-center select-none">
       <div className="max-w-4xl w-full mx-auto space-y-6">
+        {/* Remote Operator Smartphone ACC Control Card */}
+        <div className="bg-[#FFE600] border-4 border-black p-6 rounded-3xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] text-black space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-black text-white border border-black">
+              📱 HP OPERATOR PANITIA KARANG TARUNA
+            </span>
+            <span className="text-xs font-black bg-white px-3 py-1 rounded-full border-2 border-black">TARIF: RP 7.000</span>
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-2xl sm:text-3xl font-black uppercase">KONTROL PEMBAYARAN REMOTE</h2>
+            <p className="text-xs sm:text-sm font-bold text-slate-900">
+              Tekan tombol hijau di bawah setelah menerima notifikasi DANA atau uang tunai Rp 7.000 dari konsumen.
+            </p>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.02, x: -2, y: -2 }}
+            whileTap={{ scale: 0.98, x: 2, y: 2 }}
+            onClick={handleApprovePaymentRemote}
+            disabled={isSendingAcc}
+            className="w-full py-5 rounded-2xl bg-[#00E676] hover:bg-[#00C853] text-black font-black text-xl sm:text-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wide cursor-pointer transition-all flex items-center justify-center gap-3 disabled:opacity-80"
+          >
+            <span className="w-4 h-4 rounded-full bg-white animate-ping border border-black"></span>
+            <span>{isSendingAcc ? 'MENGIRIM ACC...' : '✅ KONFIRMASI LUNAS (RP 7.000)'}</span>
+          </motion.button>
+
+          {accSuccessMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 bg-white border-2 border-black rounded-xl text-center text-xs font-black text-[#00E676] uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            >
+              {accSuccessMessage}
+            </motion.div>
+          )}
+        </div>
+
         {/* Header Console Panel Neobrutalist */}
         <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
