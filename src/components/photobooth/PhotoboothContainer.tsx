@@ -267,6 +267,14 @@ export const PhotoboothContainer: React.FC = () => {
         body: formData,
       });
 
+      if (!res.ok) {
+        if (res.status === 413) {
+          throw new Error('Ukuran foto terlalu besar untuk server. Silakan coba lagi.');
+        }
+        const textMsg = await res.text();
+        throw new Error(textMsg || `Gagal mengunggah foto (HTTP ${res.status}).`);
+      }
+
       const json = await res.json();
 
       if (!json.success) {

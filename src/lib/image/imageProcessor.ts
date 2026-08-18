@@ -24,7 +24,8 @@ async function loadImage(source: string | Blob): Promise<HTMLImageElement> {
 
 /**
  * Composites 1 to 3 raw photo Blobs with static or SVG frame templates on HTMLCanvasElement.
- * Produces a high-quality 13.5 Megapixel Ultra HD master image (~3.5MB - 4.5MB) and a downscaled preview derivative.
+ * Produces a high-quality 8.64 Megapixel Studio HD master image (~1.8MB) and a preview derivative (~350KB),
+ * perfectly tuned for Vercel Serverless Function 4.5MB payload limits.
  */
 export async function compositePhotoWithFrame(
   photoInput: Blob | Blob[],
@@ -39,11 +40,11 @@ export async function compositePhotoWithFrame(
   // Load all photo Blobs into Image elements
   const photoImages = await Promise.all(photoBlobs.map((blob) => loadImage(blob)));
 
-  // Ultra HD Master Canvas Dimensions (3000 x 4500 px / 13.5 MP for true ~3.5MB - 4.5MB file size)
-  const masterWidth = 3000;
-  const masterHeight = 4500;
+  // Studio HD Master Canvas Dimensions (2400 x 3600 px / 8.64 MP)
+  const masterWidth = 2400;
+  const masterHeight = 3600;
 
-  // 1. Create Master Canvas (Portrait 3000 x 4500)
+  // 1. Create Master Canvas (Portrait 2400 x 3600)
   const masterCanvas = document.createElement('canvas');
   masterCanvas.width = masterWidth;
   masterCanvas.height = masterHeight;
@@ -59,23 +60,23 @@ export async function compositePhotoWithFrame(
 
   // If using Karang Taruna Twin Strip 3-Pose SVG Overlay Frame
   if (frame?.overlayUrl && (frame.id.includes('karta') || frame.overlayUrl.includes('karta'))) {
-    // Twin Strip Slot Coordinates (Scaled 2.5x for 3000 x 4500 Ultra HD 13.5MP):
-    // Left Strip:  Pose 1 (175, 1300), Pose 2 (175, 2225), Pose 3 (175, 3150) - Size: 1150 x 850
-    // Right Strip: Pose 1 (1675, 250), Pose 2 (1675, 1175), Pose 3 (1675, 2100) - Size: 1150 x 850
-    const slotWidth = 1150;
-    const slotHeight = 850;
-    const borderRadius = 90;
+    // Twin Strip Slot Coordinates (Scaled 2.0x for 2400 x 3600 Studio HD):
+    // Left Strip:  Pose 1 (140, 1040), Pose 2 (140, 1780), Pose 3 (140, 2520) - Size: 920 x 680
+    // Right Strip: Pose 1 (1340, 200), Pose 2 (1340, 940), Pose 3 (1340, 1680) - Size: 920 x 680
+    const slotWidth = 920;
+    const slotHeight = 680;
+    const borderRadius = 72;
 
     const leftSlots = [
-      { x: 175, y: 1300 },
-      { x: 175, y: 2225 },
-      { x: 175, y: 3150 },
+      { x: 140, y: 1040 },
+      { x: 140, y: 1780 },
+      { x: 140, y: 2520 },
     ];
 
     const rightSlots = [
-      { x: 1675, y: 250 },
-      { x: 1675, y: 1175 },
-      { x: 1675, y: 2100 },
+      { x: 1340, y: 200 },
+      { x: 1340, y: 940 },
+      { x: 1340, y: 1680 },
     ];
 
     // Function to draw clipped rounded photo with portrait center cropping into slot
@@ -149,7 +150,7 @@ export async function compositePhotoWithFrame(
     }
   }
 
-  // Export Ultra HD Master Blob (Maximum JPEG quality 1.0, ~3.5MB - 4.5MB file size)
+  // Export Studio HD Master Blob (JPEG quality 0.90, ~1.8MB file size)
   const masterBlob = await new Promise<Blob>((resolve, reject) => {
     masterCanvas.toBlob(
       (blob) => {
@@ -160,12 +161,12 @@ export async function compositePhotoWithFrame(
         }
       },
       'image/jpeg',
-      1.0
+      0.90
     );
   });
 
-  // Export Preview Canvas Derivative (Max Width 1200px, Portrait)
-  const maxPreviewWidth = 1200;
+  // Export Preview Canvas Derivative (Max Width 1000px, Portrait)
+  const maxPreviewWidth = 1000;
   let previewWidth = masterWidth;
   let previewHeight = masterHeight;
 
@@ -196,7 +197,7 @@ export async function compositePhotoWithFrame(
         }
       },
       'image/jpeg',
-      0.88
+      0.75
     );
   });
 
