@@ -139,38 +139,36 @@ export async function compositePhotoWithFrame(
 
     const isSingleStrip = frame.aspectRatio === '1:3';
 
-    if (isSingleStrip) {
-      // Single Strip (1200 x 3600)
-      for (let i = 0; i < 3; i++) {
-        const img = photoImages[i % photoImages.length];
-        drawPhotoInSlot(img, 100, slotsY[i], slotWidth, slotHeight, borderRadius);
-      }
+    try {
+      const svgOverlayImg = await loadImage(frame.overlayUrl);
 
-      try {
-        const svgOverlayImg = await loadImage(frame.overlayUrl);
+      if (isSingleStrip) {
+        // Single Strip (1200 x 3600):
+        // 1. Draw user's original SVG frame first
         ctx.drawImage(svgOverlayImg, 0, 0, 1200, 3600);
-      } catch (overlayErr) {
-        console.warn('[ImageProcessor] Gagal memuat SVG overlay:', overlayErr);
-      }
-    } else {
-      // Twin Strip (2400 x 3600) - Duplicate Left & Right
-      for (let i = 0; i < 3; i++) {
-        const img = photoImages[i % photoImages.length];
-        // Left Strip Photos
-        drawPhotoInSlot(img, 100, slotsY[i], slotWidth, slotHeight, borderRadius);
-        // Right Strip Photos
-        drawPhotoInSlot(img, 1300, slotsY[i], slotWidth, slotHeight, borderRadius);
-      }
 
-      try {
-        const svgOverlayImg = await loadImage(frame.overlayUrl);
-        // Draw Overlay on Left Half (0, 0, 1200, 3600)
+        // 2. Draw captured photos ON TOP into slot coordinates
+        for (let i = 0; i < 3; i++) {
+          const img = photoImages[i % photoImages.length];
+          drawPhotoInSlot(img, 100, slotsY[i], slotWidth, slotHeight, borderRadius);
+        }
+      } else {
+        // Twin Strip (2400 x 3600):
+        // 1. Draw user's original SVG frame on Left (0,0) and Right (1200,0) first
         ctx.drawImage(svgOverlayImg, 0, 0, 1200, 3600);
-        // Draw Overlay on Right Half (1200, 0, 1200, 3600)
         ctx.drawImage(svgOverlayImg, 1200, 0, 1200, 3600);
-      } catch (overlayErr) {
-        console.warn('[ImageProcessor] Gagal memuat SVG overlay:', overlayErr);
+
+        // 2. Draw captured photos ON TOP into slot coordinates for Left & Right strips
+        for (let i = 0; i < 3; i++) {
+          const img = photoImages[i % photoImages.length];
+          // Left Strip Photos
+          drawPhotoInSlot(img, 100, slotsY[i], slotWidth, slotHeight, borderRadius);
+          // Right Strip Photos
+          drawPhotoInSlot(img, 1300, slotsY[i], slotWidth, slotHeight, borderRadius);
+        }
       }
+    } catch (overlayErr) {
+      console.warn('[ImageProcessor] Gagal memuat SVG overlay:', overlayErr);
     }
   } else {
     // Single Photo Standard Frame
