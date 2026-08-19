@@ -31,23 +31,23 @@ export const CaptureReviewScreen: React.FC<CaptureReviewScreenProps> = ({
       transition={{ type: 'spring', stiffness: 280, damping: 22 }}
       className="relative w-full max-w-4xl mx-auto flex flex-col items-center justify-center space-y-6 select-none"
     >
-      {/* Captured Image Viewport (Portrait 2:3 ratio max height 460px) */}
-      <div className="relative w-full aspect-[2/3] max-h-[460px] sm:max-h-[48vh] bg-[#FFFDF5] rounded-3xl overflow-hidden border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-2.5">
+      {/* Single Strip Captured Image Viewport (Tight Snug Fit, Zero Side Gaps) */}
+      <div className="relative flex items-center justify-center max-h-[440px] sm:max-h-[46vh] p-1">
         {imageSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageSrc}
-            alt="Hasil Capture Photobooth Twin Strip Portrait"
-            className="w-auto h-full max-h-[440px] sm:max-h-[45vh] object-contain rounded-2xl border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+            alt="Hasil Capture Photobooth Single Strip 3-Pose"
+            className="w-auto h-full max-h-[430px] sm:max-h-[44vh] object-contain rounded-3xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white"
           />
         ) : (
           <div className="text-black font-bold">Capture Preview Placeholder</div>
         )}
 
         {isProcessing && (
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center gap-3 z-30 text-white">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center gap-3 z-30 text-white rounded-3xl">
             <div className="w-12 h-12 border-4 border-[#FFE600] border-t-transparent rounded-full animate-spin"></div>
-            <span className="font-black text-lg uppercase tracking-wide">Memproses Frame & Gambar...</span>
+            <span className="font-black text-base uppercase tracking-wide">Memproses Frame & Gambar...</span>
           </div>
         )}
       </div>
