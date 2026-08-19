@@ -61,26 +61,7 @@ export const CaptureReviewScreen: React.FC<CaptureReviewScreenProps> = ({
         />
       )}
 
-      {/* Processed Metrics */}
-      {processedResult && (
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-black bg-[#FFFDF5] px-4 py-2 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-          <div>
-            <span className="font-bold text-slate-700">Master: </span>
-            <span className="text-[#0052FF] font-black">
-              {processedResult.masterWidth}x{processedResult.masterHeight} px
-            </span>{' '}
-            ({(processedResult.masterSizeBytes / (1024 * 1024)).toFixed(2)} MB)
-          </div>
-          <div className="text-black font-bold">•</div>
-          <div>
-            <span className="font-bold text-slate-700">Preview: </span>
-            <span className="text-[#FF3366] font-black">
-              {processedResult.previewWidth}x{processedResult.previewHeight} px
-            </span>{' '}
-            ({(processedResult.previewSizeBytes / 1024).toFixed(1)} KB)
-          </div>
-        </div>
-      )}
+
 
       {/* Action Bar */}
       <div className="flex items-center justify-center gap-6 w-full pt-2">

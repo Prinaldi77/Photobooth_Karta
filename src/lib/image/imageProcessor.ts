@@ -136,11 +136,13 @@ export async function compositePhotoWithFrame(
   // Load all photo Blobs into Image elements
   const photoImages = await Promise.all(photoBlobs.map((blob) => loadImage(blob)));
 
-  // Studio HD Master Canvas Dimensions (2400 x 3600 px / 8.64 MP)
-  const masterWidth = 2400;
+  const isSingleStrip = frame?.aspectRatio === '1:3';
+
+  // Studio HD Master Canvas Dimensions (1200 x 3600 px for Single Strip 1:3, or 2400 x 3600 px for Twin Strip 2:3)
+  const masterWidth = isSingleStrip ? 1200 : 2400;
   const masterHeight = 3600;
 
-  // 1. Create Master Canvas (Portrait 2400 x 3600)
+  // 1. Create Master Canvas
   const masterCanvas = document.createElement('canvas');
   masterCanvas.width = masterWidth;
   masterCanvas.height = masterHeight;

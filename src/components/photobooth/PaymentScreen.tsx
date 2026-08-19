@@ -87,23 +87,23 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
         {/* Content Grid: Photo Preview with Watermark + Payment Method Selector */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Photo Preview Card with Watermark (5 cols) */}
-          <div className="lg:col-span-5 aspect-[2/3] max-h-[460px] bg-slate-950 rounded-2xl overflow-hidden border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center p-2 mx-auto w-full">
+          {/* Photo Preview Card with Subtle Watermark Badge (5 cols) */}
+          <div className="lg:col-span-5 relative flex items-center justify-center max-h-[440px] sm:max-h-[46vh] p-1 mx-auto w-full">
             {imageSrc ? (
-              <>
+              <div className="relative inline-block h-full max-h-[430px] sm:max-h-[45vh]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imageSrc}
                   alt="Hasil Foto Pratinjau 3 Pose"
-                  className="w-auto h-full max-h-[440px] object-contain rounded-xl"
+                  className="w-auto h-full max-h-[430px] sm:max-h-[45vh] object-contain rounded-3xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] bg-white"
                 />
-                {/* Watermark Overlay */}
-                <div className="absolute inset-0 bg-black/20 pointer-events-none flex items-center justify-center">
-                  <span className="text-3xl font-black text-white/80 bg-black/60 px-6 py-2 rounded-2xl border-2 border-white tracking-widest rotate-[-12deg]">
-                    PREVIEW FOTO
+                {/* Subtle Non-Intrusive Watermark Badge */}
+                <div className="absolute top-3 right-3 pointer-events-none z-10">
+                  <span className="text-[10px] font-black text-white bg-black/80 px-2.5 py-1 rounded-full border border-white uppercase tracking-wider shadow-md">
+                    🔒 PREVIEW FOTO
                   </span>
                 </div>
-              </>
+              </div>
             ) : (
               <div className="text-slate-400 text-sm font-bold">Pratinjau Foto 3 Pose</div>
             )}

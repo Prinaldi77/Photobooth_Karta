@@ -66,8 +66,8 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
                     : 'bg-[#FFFDF5] text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-100'
                 }`}
               >
-                {/* SVG Visual Thumbnail Frame Preview */}
-                <div className="w-full aspect-[2/3] max-h-24 bg-slate-100 rounded-xl overflow-hidden border-2 border-black flex items-center justify-center relative p-0.5">
+                {/* SVG Visual Thumbnail Frame Preview (1:3 Single Strip Proportions) */}
+                <div className="w-14 aspect-[1/3] max-h-28 bg-white rounded-xl overflow-hidden border-2 border-black flex items-center justify-center relative p-0.5 mx-auto">
                   {frame.overlayUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -86,7 +86,7 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
                 {/* Color Dot & Short Name */}
                 <div className="w-full flex items-center justify-center gap-1">
                   <span
-                    className="w-2.5 h-2.5 rounded-full border border-black shrink-0"
+                    className="w-2 h-2 rounded-full border border-black shrink-0"
                     style={{ backgroundColor: frame.borderColor || '#0052FF' }}
                   />
                   <span className="text-[10px] font-black uppercase tracking-tight truncate w-full text-center">
