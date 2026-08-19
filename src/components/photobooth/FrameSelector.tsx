@@ -17,32 +17,34 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
   disabled = false,
 }) => {
   return (
-    <div className="w-full flex flex-col items-center gap-2 select-none">
-      <span className="text-xs font-black text-black uppercase tracking-widest bg-[#FFE600] px-3 py-1 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-        PILIH FRAME / TEMPLATE
-      </span>
+    <div className="w-full max-w-4xl flex flex-col items-center gap-3 select-none">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-black text-black uppercase tracking-widest bg-[#FFE600] px-4 py-1.5 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+          PILIH FRAME / TEMPLATE ({STATIC_FRAMES.length} DESAIN AVAIL)
+        </span>
+      </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+      <div className="w-full overflow-x-auto pb-3 pt-1 px-2 flex items-center justify-start sm:justify-center gap-2.5 no-scrollbar scroll-smooth">
         {STATIC_FRAMES.map((frame) => {
           const isSelected = selectedFrameId === frame.id;
           return (
             <motion.button
-              whileHover={{ scale: 1.05, x: -2, y: -2 }}
-              whileTap={{ scale: 0.95, x: 2, y: 2 }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
               key={frame.id}
               onClick={() => onSelectFrame(frame)}
               disabled={disabled}
-              className={`px-4 py-2.5 rounded-xl border-3 border-black text-xs font-black uppercase transition-all cursor-pointer flex items-center gap-2 ${
+              className={`shrink-0 px-3.5 py-2 rounded-xl border-3 border-black text-xs font-black uppercase transition-all cursor-pointer flex items-center gap-2 ${
                 isSelected
-                  ? 'bg-[#0052FF] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
-                  : 'bg-[#FFFDF5] text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-100'
+                  ? 'bg-[#0052FF] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ring-2 ring-black ring-offset-1'
+                  : 'bg-[#FFFDF5] text-black shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-100'
               }`}
             >
               <span
-                className="w-3.5 h-3.5 rounded-full border-2 border-black"
+                className="w-3.5 h-3.5 rounded-full border-2 border-black shrink-0"
                 style={{ backgroundColor: frame.borderColor || '#0052FF' }}
               />
-              <span>{frame.name}</span>
+              <span className="whitespace-nowrap">{frame.name}</span>
             </motion.button>
           );
         })}

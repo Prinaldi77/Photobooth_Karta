@@ -58,6 +58,43 @@ export async function compositePhotoWithFrame(
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, masterWidth, masterHeight);
 
+  // General Photo Slot Drawer helper
+  const drawPhotoInSlot = (
+    img: HTMLImageElement,
+    x: number,
+    y: number,
+    slotWidth: number,
+    slotHeight: number,
+    borderRadius = 40
+  ) => {
+    ctx.save();
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(x, y, slotWidth, slotHeight, borderRadius);
+    } else {
+      ctx.rect(x, y, slotWidth, slotHeight);
+    }
+    ctx.clip();
+
+    const imgAspect = img.naturalWidth / img.naturalHeight;
+    const slotAspect = slotWidth / slotHeight;
+    let drawW = slotWidth;
+    let drawH = slotHeight;
+    let drawX = x;
+    let drawY = y;
+
+    if (imgAspect > slotAspect) {
+      drawW = slotHeight * imgAspect;
+      drawX = x - (drawW - slotWidth) / 2;
+    } else {
+      drawH = slotWidth / imgAspect;
+      drawY = y - (drawH - slotHeight) / 2;
+    }
+
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+    ctx.restore();
+  };
+
   // If using Karang Taruna Twin Strip 3-Pose SVG Overlay Frame
   if (frame?.overlayUrl && (frame.id.includes('karta') || frame.overlayUrl.includes('karta'))) {
     // Twin Strip Slot Coordinates (Scaled 2.0x for 2400 x 3600 Studio HD):
@@ -79,42 +116,11 @@ export async function compositePhotoWithFrame(
       { x: 1340, y: 1680 },
     ];
 
-    // Function to draw clipped rounded photo with portrait center cropping into slot
-    const drawPhotoInSlot = (img: HTMLImageElement, x: number, y: number) => {
-      ctx.save();
-      ctx.beginPath();
-      if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(x, y, slotWidth, slotHeight, borderRadius);
-      } else {
-        ctx.rect(x, y, slotWidth, slotHeight);
-      }
-      ctx.clip();
-
-      // Portrait Cover Scaling math to fill slot without distortion
-      const imgAspect = img.naturalWidth / img.naturalHeight;
-      const slotAspect = slotWidth / slotHeight;
-      let drawW = slotWidth;
-      let drawH = slotHeight;
-      let drawX = x;
-      let drawY = y;
-
-      if (imgAspect > slotAspect) {
-        drawW = slotHeight * imgAspect;
-        drawX = x - (drawW - slotWidth) / 2;
-      } else {
-        drawH = slotWidth / imgAspect;
-        drawY = y - (drawH - slotHeight) / 2;
-      }
-
-      ctx.drawImage(img, drawX, drawY, drawW, drawH);
-      ctx.restore();
-    };
-
     // Draw photos into left & right slots
     for (let i = 0; i < 3; i++) {
       const img = photoImages[i % photoImages.length];
-      drawPhotoInSlot(img, leftSlots[i].x, leftSlots[i].y);
-      drawPhotoInSlot(img, rightSlots[i].x, rightSlots[i].y);
+      drawPhotoInSlot(img, leftSlots[i].x, leftSlots[i].y, slotWidth, slotHeight, borderRadius);
+      drawPhotoInSlot(img, rightSlots[i].x, rightSlots[i].y, slotWidth, slotHeight, borderRadius);
     }
 
     // Load & draw SVG Overlay Image on top
@@ -122,7 +128,49 @@ export async function compositePhotoWithFrame(
       const svgOverlayImg = await loadImage(frame.overlayUrl);
       ctx.drawImage(svgOverlayImg, 0, 0, masterWidth, masterHeight);
     } catch (overlayErr) {
-      console.warn('[ImageProcessor] Gagal memuat SVG overlay, menggunakan gambar murni:', overlayErr);
+      console.warn('[ImageProcessor] Gagal memuat SVG overlay karta:', overlayErr);
+    }
+  } else if (frame?.overlayUrl) {
+    // 3-Pose Strip Frames (frame-2.svg through frame-17.svg)
+    const slotWidth = 1000;
+    const slotHeight = 880;
+    const borderRadius = 36;
+    const slotsY = [160, 1220, 2280];
+
+    const isSingleStrip = frame.aspectRatio === '1:3';
+
+    if (isSingleStrip) {
+      // Single Strip (1200 x 3600)
+      for (let i = 0; i < 3; i++) {
+        const img = photoImages[i % photoImages.length];
+        drawPhotoInSlot(img, 100, slotsY[i], slotWidth, slotHeight, borderRadius);
+      }
+
+      try {
+        const svgOverlayImg = await loadImage(frame.overlayUrl);
+        ctx.drawImage(svgOverlayImg, 0, 0, 1200, 3600);
+      } catch (overlayErr) {
+        console.warn('[ImageProcessor] Gagal memuat SVG overlay:', overlayErr);
+      }
+    } else {
+      // Twin Strip (2400 x 3600) - Duplicate Left & Right
+      for (let i = 0; i < 3; i++) {
+        const img = photoImages[i % photoImages.length];
+        // Left Strip Photos
+        drawPhotoInSlot(img, 100, slotsY[i], slotWidth, slotHeight, borderRadius);
+        // Right Strip Photos
+        drawPhotoInSlot(img, 1300, slotsY[i], slotWidth, slotHeight, borderRadius);
+      }
+
+      try {
+        const svgOverlayImg = await loadImage(frame.overlayUrl);
+        // Draw Overlay on Left Half (0, 0, 1200, 3600)
+        ctx.drawImage(svgOverlayImg, 0, 0, 1200, 3600);
+        // Draw Overlay on Right Half (1200, 0, 1200, 3600)
+        ctx.drawImage(svgOverlayImg, 1200, 0, 1200, 3600);
+      } catch (overlayErr) {
+        console.warn('[ImageProcessor] Gagal memuat SVG overlay:', overlayErr);
+      }
     }
   } else {
     // Single Photo Standard Frame
