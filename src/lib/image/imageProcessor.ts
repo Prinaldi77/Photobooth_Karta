@@ -22,6 +22,102 @@ async function loadImage(source: string | Blob): Promise<HTMLImageElement> {
   });
 }
 
+interface SlotBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+const DEFAULT_STRIP_SLOTS: SlotBox[] = [
+  { x: 100, y: 160, w: 1000, h: 880 },
+  { x: 100, y: 1220, w: 1000, h: 880 },
+  { x: 100, y: 2280, w: 1000, h: 880 },
+];
+
+const FRAME_SLOTS_MAP: Record<string, SlotBox[]> = {
+  'frame-2': [
+    { x: 120, y: 189, w: 960, h: 810 },
+    { x: 120, y: 1339, w: 960, h: 810 },
+    { x: 120, y: 2489, w: 960, h: 810 },
+  ],
+  'frame-3': [
+    { x: 60, y: 120, w: 1080, h: 950 },
+    { x: 60, y: 1246, w: 1080, h: 950 },
+    { x: 60, y: 2483, w: 1080, h: 950 },
+  ],
+  'frame-4': [
+    { x: 120, y: 476, w: 960, h: 920 },
+    { x: 120, y: 1503, w: 960, h: 920 },
+    { x: 120, y: 2526, w: 960, h: 920 },
+  ],
+  'frame-5': [
+    { x: 120, y: 457, w: 960, h: 850 },
+    { x: 120, y: 1405, w: 960, h: 850 },
+    { x: 120, y: 2447, w: 960, h: 850 },
+  ],
+  'frame-6': [
+    { x: 75, y: 183, w: 1050, h: 763 },
+    { x: 75, y: 1050, w: 1050, h: 763 },
+    { x: 75, y: 1917, w: 1050, h: 763 },
+  ],
+  'frame-7': [
+    { x: 55, y: 227, w: 1090, h: 866 },
+    { x: 55, y: 1214, w: 1090, h: 866 },
+    { x: 55, y: 2201, w: 1090, h: 866 },
+  ],
+  'frame-8': [
+    { x: 100, y: 197, w: 1000, h: 820 },
+    { x: 100, y: 1149, w: 1000, h: 820 },
+    { x: 100, y: 2101, w: 1000, h: 820 },
+  ],
+  'frame-9': [
+    { x: 100, y: 338, w: 1000, h: 803 },
+    { x: 100, y: 1396, w: 1000, h: 803 },
+    { x: 100, y: 2453, w: 1000, h: 803 },
+  ],
+  'frame-10': [
+    { x: 120, y: 334, w: 960, h: 730 },
+    { x: 120, y: 1159, w: 960, h: 730 },
+    { x: 120, y: 2104, w: 960, h: 730 },
+  ],
+  'frame-11': [
+    { x: 100, y: 200, w: 1000, h: 950 },
+    { x: 100, y: 1350, w: 1000, h: 950 },
+    { x: 100, y: 2500, w: 1000, h: 950 },
+  ],
+  'frame-12': [
+    { x: 60, y: 120, w: 1080, h: 960 },
+    { x: 60, y: 1193, w: 1080, h: 960 },
+    { x: 60, y: 2266, w: 1080, h: 960 },
+  ],
+  'frame-13': [
+    { x: 120, y: 119, w: 960, h: 852 },
+    { x: 120, y: 1122, w: 960, h: 854 },
+    { x: 120, y: 2127, w: 960, h: 854 },
+  ],
+  'frame-14': [
+    { x: 120, y: 222, w: 960, h: 873 },
+    { x: 120, y: 1207, w: 960, h: 873 },
+    { x: 120, y: 2192, w: 960, h: 873 },
+  ],
+  'frame-15': [
+    { x: 80, y: 516, w: 1040, h: 728 },
+    { x: 80, y: 1515, w: 1040, h: 737 },
+    { x: 80, y: 2472, w: 1040, h: 677 },
+  ],
+  'frame-16': [
+    { x: 100, y: 120, w: 1000, h: 823 },
+    { x: 100, y: 1037, w: 1000, h: 823 },
+    { x: 100, y: 1954, w: 1000, h: 823 },
+  ],
+  'frame-17': [
+    { x: 87, y: 329, w: 1025, h: 853 },
+    { x: 87, y: 1290, w: 1025, h: 866 },
+    { x: 87, y: 2263, w: 1025, h: 918 },
+  ],
+};
+
 /**
  * Composites 1 to 3 raw photo Blobs with static or SVG frame templates on HTMLCanvasElement.
  * Produces a high-quality 8.64 Megapixel Studio HD master image (~1.8MB) and a preview derivative (~350KB),
@@ -98,8 +194,6 @@ export async function compositePhotoWithFrame(
   // If using Karang Taruna Twin Strip 3-Pose SVG Overlay Frame
   if (frame?.overlayUrl && (frame.id.includes('karta') || frame.overlayUrl.includes('karta'))) {
     // Twin Strip Slot Coordinates (Scaled 2.0x for 2400 x 3600 Studio HD):
-    // Left Strip:  Pose 1 (140, 1040), Pose 2 (140, 1780), Pose 3 (140, 2520) - Size: 920 x 680
-    // Right Strip: Pose 1 (1340, 200), Pose 2 (1340, 940), Pose 3 (1340, 1680) - Size: 920 x 680
     const slotWidth = 920;
     const slotHeight = 680;
     const borderRadius = 72;
@@ -132,11 +226,7 @@ export async function compositePhotoWithFrame(
     }
   } else if (frame?.overlayUrl) {
     // 3-Pose Strip Frames (frame-2.svg through frame-17.svg)
-    const slotWidth = 1000;
-    const slotHeight = 880;
-    const borderRadius = 36;
-    const slotsY = [160, 1220, 2280];
-
+    const slots = (frame?.id && FRAME_SLOTS_MAP[frame.id]) || DEFAULT_STRIP_SLOTS;
     const isSingleStrip = frame.aspectRatio === '1:3';
 
     try {
@@ -144,27 +234,25 @@ export async function compositePhotoWithFrame(
 
       if (isSingleStrip) {
         // Single Strip (1200 x 3600):
-        // 1. Draw user's original SVG frame first
         ctx.drawImage(svgOverlayImg, 0, 0, 1200, 3600);
 
-        // 2. Draw captured photos ON TOP into slot coordinates
         for (let i = 0; i < 3; i++) {
           const img = photoImages[i % photoImages.length];
-          drawPhotoInSlot(img, 100, slotsY[i], slotWidth, slotHeight, borderRadius);
+          const slot = slots[i] || DEFAULT_STRIP_SLOTS[i];
+          drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 36);
         }
       } else {
         // Twin Strip (2400 x 3600):
-        // 1. Draw user's original SVG frame on Left (0,0) and Right (1200,0) first
         ctx.drawImage(svgOverlayImg, 0, 0, 1200, 3600);
         ctx.drawImage(svgOverlayImg, 1200, 0, 1200, 3600);
 
-        // 2. Draw captured photos ON TOP into slot coordinates for Left & Right strips
         for (let i = 0; i < 3; i++) {
           const img = photoImages[i % photoImages.length];
-          // Left Strip Photos
-          drawPhotoInSlot(img, 100, slotsY[i], slotWidth, slotHeight, borderRadius);
-          // Right Strip Photos
-          drawPhotoInSlot(img, 1300, slotsY[i], slotWidth, slotHeight, borderRadius);
+          const slot = slots[i] || DEFAULT_STRIP_SLOTS[i];
+          // Left Strip Photo
+          drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 36);
+          // Right Strip Photo
+          drawPhotoInSlot(img, slot.x + 1200, slot.y, slot.w, slot.h, 36);
         }
       }
     } catch (overlayErr) {

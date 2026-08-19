@@ -31,14 +31,14 @@ export const CaptureReviewScreen: React.FC<CaptureReviewScreenProps> = ({
       transition={{ type: 'spring', stiffness: 280, damping: 22 }}
       className="relative w-full max-w-4xl mx-auto flex flex-col items-center justify-center space-y-6 select-none"
     >
-      {/* Captured Image Viewport (Portrait 2:3 ratio max height 580px) */}
-      <div className="relative w-full aspect-[2/3] max-h-[580px] bg-[#FFFDF5] rounded-3xl overflow-hidden border-4 border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-3">
+      {/* Captured Image Viewport (Portrait 2:3 ratio max height 460px) */}
+      <div className="relative w-full aspect-[2/3] max-h-[460px] sm:max-h-[48vh] bg-[#FFFDF5] rounded-3xl overflow-hidden border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-2.5">
         {imageSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageSrc}
             alt="Hasil Capture Photobooth Twin Strip Portrait"
-            className="w-auto h-full max-h-[550px] object-contain rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+            className="w-auto h-full max-h-[440px] sm:max-h-[45vh] object-contain rounded-2xl border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
           />
         ) : (
           <div className="text-black font-bold">Capture Preview Placeholder</div>
