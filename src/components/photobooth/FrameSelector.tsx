@@ -29,7 +29,7 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
     <div className="w-full max-w-5xl flex flex-col items-center gap-2 select-none px-2">
       {/* Header Badge */}
       <div className="flex items-center gap-2">
-        <span className="text-xs font-black text-black uppercase tracking-widest bg-[#FFE600] px-4 py-1 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+        <span className="text-xs font-bold text-[#161F33] uppercase tracking-widest bg-[#F0C878] px-4 py-1 rounded-full border border-[#D9A441] shadow-sm">
           PILIH FRAME ({STATIC_FRAMES.length} DESAIN TERSEDIA)
         </span>
       </div>
@@ -40,7 +40,7 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
         <button
           onClick={() => scroll('left')}
           disabled={disabled}
-          className="shrink-0 w-9 h-9 rounded-full bg-white hover:bg-yellow-100 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center font-black text-black transition-all cursor-pointer z-10 disabled:opacity-50"
+          className="shrink-0 w-9 h-9 rounded-full bg-white hover:bg-[#FBF2DF] border border-[#E4D3A9] shadow-sm flex items-center justify-center font-extrabold text-[#161F33] transition-all cursor-pointer z-10 disabled:opacity-50"
           aria-label="Scroll Left"
         >
           &lt;
@@ -60,14 +60,14 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
                 key={frame.id}
                 onClick={() => onSelectFrame(frame)}
                 disabled={disabled}
-                className={`shrink-0 w-28 p-2 rounded-2xl border-3 border-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                className={`shrink-0 w-28 p-2 rounded-2xl flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#0052FF] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ring-3 ring-yellow-300'
-                    : 'bg-[#FFFDF5] text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-100'
+                    ? 'bg-[#C8102E] text-[#FFFBF2] border-2 border-[#D9A441] shadow-md ring-2 ring-[#F0C878]'
+                    : 'bg-[#FBF2DF] text-[#161F33] border border-[#E4D3A9] shadow-sm hover:bg-[#E4D3A9]/30'
                 }`}
               >
                 {/* SVG Visual Thumbnail Frame Preview (1:3 Single Strip Proportions) */}
-                <div className="w-14 aspect-[1/3] max-h-28 bg-white rounded-xl overflow-hidden border-2 border-black flex items-center justify-center relative p-0.5 mx-auto">
+                <div className="w-14 aspect-[1/3] max-h-28 bg-white rounded-xl overflow-hidden border border-[#E4D3A9] flex items-center justify-center relative p-0.5 mx-auto">
                   {frame.overlayUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -78,7 +78,7 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
                   ) : (
                     <div
                       className="w-full h-full rounded-lg"
-                      style={{ backgroundColor: frame.borderColor || '#0052FF' }}
+                      style={{ backgroundColor: frame.borderColor || '#C8102E' }}
                     />
                   )}
                 </div>
@@ -86,10 +86,10 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
                 {/* Color Dot & Short Name */}
                 <div className="w-full flex items-center justify-center gap-1">
                   <span
-                    className="w-2 h-2 rounded-full border border-black shrink-0"
-                    style={{ backgroundColor: frame.borderColor || '#0052FF' }}
+                    className="w-2 h-2 rounded-full border border-black/30 shrink-0"
+                    style={{ backgroundColor: frame.borderColor || '#C8102E' }}
                   />
-                  <span className="text-[10px] font-black uppercase tracking-tight truncate w-full text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-tight truncate w-full text-center">
                     {frame.name.split(' (')[0]}
                   </span>
                 </div>
@@ -102,7 +102,7 @@ export const FrameSelector: React.FC<FrameSelectorProps> = ({
         <button
           onClick={() => scroll('right')}
           disabled={disabled}
-          className="shrink-0 w-9 h-9 rounded-full bg-white hover:bg-yellow-100 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center font-black text-black transition-all cursor-pointer z-10 disabled:opacity-50"
+          className="shrink-0 w-9 h-9 rounded-full bg-white hover:bg-[#FBF2DF] border border-[#E4D3A9] shadow-sm flex items-center justify-center font-extrabold text-[#161F33] transition-all cursor-pointer z-10 disabled:opacity-50"
           aria-label="Scroll Right"
         >
           &gt;

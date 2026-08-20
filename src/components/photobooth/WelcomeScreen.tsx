@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface WelcomeScreenProps {
@@ -20,133 +20,327 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[82vh] sm:min-h-[88vh] w-full max-w-4xl mx-auto px-3 text-center select-none py-2">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-        className="bg-[#FFFDF5] border-4 border-black p-5 sm:p-8 rounded-3xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-6 w-full text-black relative overflow-hidden flex flex-col items-center justify-between"
-      >
-        {/* Playful Floating Badge Sticker */}
-        <motion.div
-          animate={{ rotate: [0, 4, -4, 0] }}
-          transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-          className="absolute -top-3 -right-3 bg-[#FFE600] text-black border-3 border-black font-black text-xs sm:text-xs px-3.5 py-1.5 rounded-full shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wider z-10"
-        >
-          🇲🇨 KARTA 02 SPECIAL
-        </motion.div>
+    <div className="relative min-h-screen w-full bg-[#FFFBF2] text-[#161F33] flex flex-col justify-between overflow-x-hidden font-sans select-none">
+      {/* 1. Top Decorative Bunting Garland (SVG Flags with Sway Animation) */}
+      <div className="w-full h-11 sm:h-12 overflow-hidden relative bg-[#161F33] z-10" aria-hidden="true">
+        <svg viewBox="0 0 1200 46" preserveAspectRatio="none" className="w-full h-full block">
+          <path d="M0,6 Q600,34 1200,6" fill="none" stroke="#D9A441" strokeWidth="2" opacity="0.7" />
+        </svg>
+        <svg viewBox="0 0 1200 46" className="absolute top-0 left-0 w-full h-full">
+          <g>
+            {Array.from({ length: 34 }).map((_, i) => {
+              const t = i / 33;
+              const x = t * 1200;
+              const flagY = 6 + 28 * (4 * t * (1 - t));
+              const colors = ['#C8102E', '#FFFBF2', '#D9A441'];
+              return (
+                <g key={i} className="flag" style={{ transform: `translate(${x}px, ${flagY}px)` }}>
+                  <path
+                    d="M-7,0 L7,0 L0,15 Z"
+                    fill={colors[i % 3]}
+                    stroke="rgba(0,0,0,0.15)"
+                    strokeWidth="0.5"
+                  />
+                </g>
+              );
+            })}
+          </g>
+        </svg>
+      </div>
 
-        {/* Main Title Section with Official Emblem Logo */}
-        <div className="space-y-3 pt-1 flex flex-col items-center text-center w-full">
-          {/* Official Karang Taruna FKPGR 02 Cropped Square Logo Emblem */}
-          <motion.div
-            whileHover={{ scale: 1.05, rotate: 2 }}
-            className="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-2xl border-3 border-black p-2 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center mx-auto"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-karta.webp"
-              alt="Logo Karang Taruna FKPGR 02"
-              className="w-full h-full object-contain"
-            />
-          </motion.div>
-
-          {/* Realtime Kiosk Status Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-[#0052FF] text-white border-2 border-black shadow-[2.5px_2.5px_0px_0px_rgba(0,0,0,1)]">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FFE600] animate-pulse border border-black"></span>
-            ⚡ KIOSK PHOTOBOOTH DIGITAL • SIAP DIGUNAKAN
+      {/* 2. Top Header Navigation */}
+      <header className="relative z-10 flex items-center justify-between max-w-6xl w-full mx-auto px-4 sm:px-8 py-4 sm:py-6">
+        <div className="flex items-center gap-3.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-karta.webp"
+            alt="Lambang FKPGR 02"
+            className="w-10 h-10 sm:w-12 sm:h-12 object-contain drop-shadow-sm"
+          />
+          <div className="leading-tight">
+            <b className="block text-sm sm:text-base font-extrabold tracking-wider uppercase">
+              KARANG TARUNA · FKPGR 02
+            </b>
+            <span className="block text-xs text-[#161F33]/70 font-semibold">
+              Forum Komunikasi Pemuda Gotong Royong
+            </span>
           </div>
+        </div>
+        <a
+          href="#mulai"
+          onClick={(e) => {
+            e.preventDefault();
+            handleButtonClick();
+          }}
+          className="text-xs sm:text-sm font-bold tracking-wide bg-[#161F33] hover:bg-[#C8102E] text-[#FFFBF2] px-4 py-2.5 sm:px-5 sm:py-3 rounded-full transition-all duration-200 shadow-md hover:-translate-y-0.5 cursor-pointer hidden sm:inline-flex items-center gap-1.5"
+        >
+          Buka Kios →
+        </a>
+      </header>
 
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-black leading-tight uppercase">
-            Abadikan Merdekamu! <br className="hidden sm:inline" />
-            <span className="bg-[#FFE600] px-4 py-0.5 rounded-2xl border-3 border-black inline-block shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 mt-1">
-              3 POSE SINGLE STRIP
+      {/* 3. Hero Section (2-Col Responsive Grid for Laptop & iPad Tablet) */}
+      <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-8 py-6 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center flex-1">
+        {/* Left Column: Hero Copy & Actions */}
+        <div className="lg:col-span-7 flex flex-col items-start text-left space-y-5">
+          <span className="inline-flex items-center gap-2 text-xs font-extrabold tracking-widest uppercase text-[#7C0C20] bg-[#C8102E]/10 border border-[#C8102E]/25 px-3.5 py-1.5 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-[#C8102E] shadow-[0_0_0_3px_rgba(200,16,46,0.18)]"></span>
+            Kios Photobooth Digital · RW 02
+          </span>
+
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-display font-normal uppercase leading-[0.95] text-[#161F33]">
+            Abadikan <br />
+            <span className="text-[#C8102E] relative inline-block">
+              Merdekamu
+              <span className="absolute left-[-2%] right-[-2%] bottom-[0.06em] h-[0.24em] bg-[#F0C878]/65 -z-10 -skew-x-6"></span>
             </span>
           </h1>
 
-          <p className="text-slate-800 text-xs sm:text-sm font-bold max-w-xl mx-auto leading-relaxed">
-            Sentuh tombol di bawah atau gunakan <strong className="bg-[#FF3366] text-white px-2 py-0.5 rounded border border-black font-black">Gestur Tangan 5 🖐️</strong> saat kamera aktif!
+          <p className="text-base sm:text-lg text-[#161F33]/75 font-medium max-w-xl leading-relaxed">
+            Angkat 5 jari ke kamera, dan biarkan kios kami menangkap tiga pose terbaikmu — langsung tersusun rapi dalam satu strip foto bertema kemerdekaan, siap dibawa pulang lewat scan QR.
+          </p>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+            <motion.button
+              whileHover={{ scale: 1.02, y: -3 }}
+              whileTap={{ scale: 0.98 }}
+              id="mulai"
+              onClick={handleButtonClick}
+              disabled={isLoading}
+              className="w-full sm:w-auto px-8 py-4 sm:py-4.5 rounded-full bg-[#C8102E] hover:bg-[#7C0C20] text-[#FFFBF2] font-bold text-base sm:text-lg tracking-wide border-none cursor-pointer shadow-[0_14px_28px_-12px_rgba(200,16,46,0.55)] transition-all flex items-center justify-center gap-2.5 uppercase"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>MEMBUKA KAMERA...</span>
+                </>
+              ) : (
+                <>
+                  <span>Mulai Photobooth Sekarang</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </>
+              )}
+            </motion.button>
+
+            <span className="text-xs sm:text-sm text-[#161F33]/70 font-semibold flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2E9E5B] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#2E9E5B]"></span>
+              </span>
+              Kamera aktif dalam satu kali klik
+            </span>
+          </div>
+        </div>
+
+        {/* Right Column: Signature Animated Photostrip Card (1:3 Single Strip proportion) */}
+        <div className="lg:col-span-5 flex justify-center items-center relative pt-4 lg:pt-0">
+          <div className="relative w-56 sm:w-64 bg-white rounded-2xl p-3.5 pb-6 shadow-[0_18px_40px_-18px_rgba(22,31,51,0.35)] rotate-[4.5deg] animate-floaty border border-[#E4D3A9]">
+            {/* Top Tape Accent */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 -rotate-3 w-22 h-7 bg-[#D9A441]/55 border border-[#D9A441]/70 shadow-sm z-10"></div>
+
+            {/* 3 Pose Photo Boxes */}
+            <div className="space-y-2.5">
+              <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-[#C8102E] relative border border-[#E4D3A9]/60">
+                <svg viewBox="0 0 280 210" className="w-full h-full block">
+                  <rect width="280" height="210" fill="#C8102E" />
+                  <circle cx="200" cy="55" r="46" fill="#F0C878" opacity="0.9" />
+                  <path d="M60 190 Q140 90 220 190 Z" fill="#161F33" />
+                  <path d="M132 118 c0-16 8-24 8-24 s8 8 8 24" stroke="#FFFBF2" strokeWidth="7" fill="none" strokeLinecap="round" />
+                  <path d="M110 150 l30-46 30 46" stroke="#FFFBF2" strokeWidth="7" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+
+              <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-[#FFFBF2] relative border border-[#E4D3A9]/60">
+                <svg viewBox="0 0 280 210" className="w-full h-full block">
+                  <rect width="280" height="210" fill="#FFFBF2" />
+                  <path d="M50 195 Q140 70 230 195 Z" fill="#C8102E" />
+                  <g fill="none" stroke="#161F33" strokeWidth="7" strokeLinecap="round">
+                    <path d="M120 150 L120 95" />
+                    <path d="M132 150 L132 82" />
+                    <path d="M144 150 L144 88" />
+                    <path d="M156 150 L156 96" />
+                    <path d="M108 150 C108 168 172 168 172 150" />
+                  </g>
+                </svg>
+              </div>
+
+              <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-[#161F33] relative border border-[#E4D3A9]/60">
+                <svg viewBox="0 0 280 210" className="w-full h-full block">
+                  <rect width="280" height="210" fill="#161F33" />
+                  <circle cx="80" cy="50" r="30" fill="#D9A441" opacity="0.85" />
+                  <path d="M40 195 Q140 100 240 195 Z" fill="#C8102E" />
+                  <path d="M40 195 Q140 100 240 195 Z" fill="none" stroke="#FFFBF2" strokeWidth="3" opacity="0.4" />
+                  <text x="140" y="175" textAnchor="middle" fontFamily="Anton, sans-serif" fontSize="30" fill="#FFFBF2">
+                    02
+                  </text>
+                </svg>
+              </div>
+            </div>
+
+            {/* Strip Caption */}
+            <div className="text-center mt-3 font-mono text-[11px] font-bold tracking-widest text-[#161F33]/70 uppercase">
+              FKPGR 02 · 17 AGUSTUS
+            </div>
+          </div>
+
+          {/* Floating Circle Badge */}
+          <div className="absolute -right-2 bottom-6 w-22 h-22 sm:w-24 sm:h-24 rounded-full bg-[#161F33] text-[#F0C878] flex items-center justify-center text-center font-mono text-[10px] sm:text-xs font-bold tracking-wider leading-tight p-2 shadow-xl -rotate-12 animate-floaty-reverse z-20">
+            GESTUR<br />5 JARI<br />AKTIF
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Features Section (3 Ticket Cards Grid) */}
+      <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-8 py-10 sm:py-14">
+        <div className="max-w-xl mb-8 text-left">
+          <span className="text-xs font-extrabold tracking-widest uppercase text-[#7C0C20]">
+            Cara Kios Bekerja
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-display font-normal uppercase text-[#161F33] mt-2 mb-2">
+            Tiga Hal yang Membuatnya Ringkas
+          </h2>
+          <p className="text-sm sm:text-base text-[#161F33]/75 font-medium">
+            Tidak perlu sentuh layar, tidak perlu antre lama — kios dirancang agar tiap warga bisa memotret dan membawa pulang hasilnya sendiri.
           </p>
         </div>
 
-        {/* Compact Feature Badges Row (3 Compact Horizontal Badges) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left w-full max-w-3xl">
-          {/* Card 1: Hand Gesture AI */}
-          <motion.div
-            whileHover={{ y: -3, scale: 1.02 }}
-            className="bg-[#00E5FF] p-3 rounded-2xl border-3 border-black shadow-[3.5px_3.5px_0px_0px_rgba(0,0,0,1)] space-y-1"
-          >
-            <div className="text-xl font-black">🖐️ GESTUR AI</div>
-            <h3 className="font-black text-xs uppercase">Bebas Sentuh 5 Jari</h3>
-            <p className="text-[11px] font-bold text-slate-900 leading-snug">
-              Angkat 5 jari ke kamera untuk mulai countdown otomatis.
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1 */}
+          <div className="relative bg-[#FBF2DF] border border-dashed border-[#E4D3A9] rounded-2xl p-6 transition-all duration-200 hover:-translate-y-1.5 hover:shadow-lg hover:border-[#C8102E] text-left">
+            <span className="absolute top-5 right-6 font-mono text-xs font-bold text-[#D9A441]">01</span>
+            <div className="w-11 h-11 rounded-xl bg-[#161F33] text-[#F0C878] flex items-center justify-center mb-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v10M8 8l4-5 4 5M6 13v3a6 6 0 0012 0v-3" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg text-[#161F33] mb-2">Gestur AI, Bebas Sentuh</h3>
+            <p className="text-sm text-[#161F33]/75 font-medium leading-relaxed">
+              Angkat lima jari ke arah kamera, kios langsung memulai hitungan mundur otomatis — tanpa perlu menyentuh apa pun.
             </p>
-          </motion.div>
+          </div>
 
-          {/* Card 2: 3 Pose Single Strip */}
-          <motion.div
-            whileHover={{ y: -3, scale: 1.02 }}
-            className="bg-[#FFE600] p-3 rounded-2xl border-3 border-black shadow-[3.5px_3.5px_0px_0px_rgba(0,0,0,1)] space-y-1"
-          >
-            <div className="text-xl font-black">📸 3 POSE STRIP</div>
-            <h3 className="font-black text-xs uppercase">Frame Single Strip</h3>
-            <p className="text-[11px] font-bold text-slate-900 leading-snug">
-              Foto digabung ke bingkai single strip 3 pose estetik.
+          {/* Card 2 */}
+          <div className="relative bg-[#FBF2DF] border border-dashed border-[#E4D3A9] rounded-2xl p-6 transition-all duration-200 hover:-translate-y-1.5 hover:shadow-lg hover:border-[#C8102E] text-left">
+            <span className="absolute top-5 right-6 font-mono text-xs font-bold text-[#D9A441]">02</span>
+            <div className="w-11 h-11 rounded-xl bg-[#161F33] text-[#F0C878] flex items-center justify-center mb-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="6" width="18" height="14" rx="2" strokeWidth={2} />
+                <circle cx="12" cy="13" r="3.4" strokeWidth={2} />
+                <path d="M8 6l1.4-2.5h5.2L16 6" strokeWidth={2} strokeLinecap="round" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg text-[#161F33] mb-2">Strip Tiga Pose</h3>
+            <p className="text-sm text-[#161F33]/75 font-medium leading-relaxed">
+              Ketiga fotomu digabung otomatis ke dalam satu bingkai single strip bertema kemerdekaan yang estetik.
             </p>
-          </motion.div>
+          </div>
 
-          {/* Card 3: Instant QR Download */}
-          <motion.div
-            whileHover={{ y: -3, scale: 1.02 }}
-            className="bg-[#00E676] p-3 rounded-2xl border-3 border-black shadow-[3.5px_3.5px_0px_0px_rgba(0,0,0,1)] space-y-1 text-black"
-          >
-            <div className="text-xl font-black">📱 SCAN QR HP</div>
-            <h3 className="font-black text-xs uppercase">Instant Ke Galeri</h3>
-            <p className="text-[11px] font-bold text-black/90 leading-snug">
-              Scan QR Code dari HP untuk simpan foto berbingkai langsung.
+          {/* Card 3 */}
+          <div className="relative bg-[#FBF2DF] border border-dashed border-[#E4D3A9] rounded-2xl p-6 transition-all duration-200 hover:-translate-y-1.5 hover:shadow-lg hover:border-[#C8102E] text-left">
+            <span className="absolute top-5 right-6 font-mono text-xs font-bold text-[#D9A441]">03</span>
+            <div className="w-11 h-11 rounded-xl bg-[#161F33] text-[#F0C878] flex items-center justify-center mb-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7" rx="1" strokeWidth={2} />
+                <rect x="14" y="3" width="7" height="7" rx="1" strokeWidth={2} />
+                <rect x="3" y="14" width="7" height="7" rx="1" strokeWidth={2} />
+                <path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2" strokeWidth={2} strokeLinecap="round" />
+              </svg>
+            </div>
+            <h3 className="font-bold text-lg text-[#161F33] mb-2">Scan QR, Langsung Simpan</h3>
+            <p className="text-sm text-[#161F33]/75 font-medium leading-relaxed">
+              Pindai kode QR dari ponselmu dan foto berbingkai langsung tersimpan ke galeri, tanpa cetak, tanpa antre.
             </p>
-          </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Simple Steps Section */}
+      <section className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-8 py-8 sm:py-12">
+        <div className="bg-[#161F33] text-[#FFFBF2] rounded-3xl p-8 sm:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center text-left">
+          <div className="lg:col-span-5 space-y-3">
+            <span className="text-xs font-extrabold tracking-widest uppercase text-[#F0C878]">
+              Alur Singkat
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-display font-normal uppercase text-[#FFFBF2]">
+              Dari Berdiri di Depan Kios Sampai Foto di Tangan
+            </h2>
+            <p className="text-sm text-[#FFFBF2]/70 font-medium leading-relaxed">
+              Tiga langkah berurutan, dirancang agar siapa pun di RW 02 bisa memakainya sendiri.
+            </p>
+          </div>
+
+          <div className="lg:col-span-7 flex flex-col divide-y divide-[#FFFBF2]/15">
+            <div className="flex gap-5 py-4 first:pt-0">
+              <span className="font-display text-3xl text-[#C8102E] shrink-0 w-8">1</span>
+              <div>
+                <h4 className="font-bold text-base text-[#FFFBF2] mb-1">Berdiri di titik yang ditandai</h4>
+                <p className="text-xs sm:text-sm text-[#FFFBF2]/70">
+                  Posisikan diri di depan kamera, lalu angkat gestur lima jari untuk memulai.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-5 py-4">
+              <span className="font-display text-3xl text-[#C8102E] shrink-0 w-8">2</span>
+              <div>
+                <h4 className="font-bold text-base text-[#FFFBF2] mb-1">Bergaya untuk tiga pose</h4>
+                <p className="text-xs sm:text-sm text-[#FFFBF2]/70">
+                  Kios menghitung mundur otomatis dan mengambil tiga pose berturut-turut.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-5 py-4 last:pb-0">
+              <span className="font-display text-3xl text-[#C8102E] shrink-0 w-8">3</span>
+              <div>
+                <h4 className="font-bold text-base text-[#FFFBF2] mb-1">Pindai dan bawa pulang</h4>
+                <p className="text-xs sm:text-sm text-[#FFFBF2]/70">
+                  Scan QR yang muncul di layar, dan strip fotomu tersimpan langsung di ponsel.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Closing CTA & Footer */}
+      <footer className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-8 pt-10 pb-8 flex flex-col items-center text-center space-y-8">
+        <div className="max-w-xl space-y-3">
+          <h2 className="text-3xl sm:text-5xl font-display font-normal uppercase text-[#161F33]">
+            Giliranmu <span className="text-[#C8102E]">Merdeka</span> di Depan Kamera
+          </h2>
+          <p className="text-sm sm:text-base text-[#161F33]/75 font-medium">
+            Kios sudah menyala dan siap menangkap semangat 17 Agustusmu bersama warga RW 02 lainnya.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={handleButtonClick}
+              disabled={isLoading}
+              className="px-8 py-4 rounded-full bg-[#C8102E] hover:bg-[#7C0C20] text-[#FFFBF2] font-bold text-base tracking-wide cursor-pointer shadow-[0_14px_28px_-12px_rgba(200,16,46,0.55)] transition-all inline-flex items-center gap-2 uppercase"
+            >
+              <span>Mulai Photobooth Sekarang</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        {/* 1-Click Main Action Start Button (Zero Scroll Accessible) */}
-        <div className="pt-1 flex flex-col items-center gap-2 w-full">
-          <motion.button
-            whileHover={{ scale: 1.03, x: -2, y: -2 }}
-            whileTap={{ scale: 0.97, x: 3, y: 3 }}
-            onClick={handleButtonClick}
-            disabled={isLoading}
-            className="w-full sm:w-auto px-10 py-4 sm:py-4.5 rounded-2xl bg-[#0052FF] hover:bg-[#0046DB] text-white font-black text-lg sm:text-xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-3 cursor-pointer transition-all uppercase tracking-wide disabled:opacity-80"
-          >
-            {isLoading ? (
-              <>
-                <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>MEMBUKA KAMERA...</span>
-              </>
-            ) : (
-              <>
-                <span>🚀 MULAI PHOTOBOOTH SEKARANG</span>
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={3}
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
-              </>
-            )}
-          </motion.button>
-
-          <span className="text-[11px] font-bold text-slate-700">
-            ⚡ 1 kali klik! Kamera webcam akan langsung aktif dan siap mengambil 3 pose foto.
-          </span>
+        <div className="w-full border-t border-[#E4D3A9] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-karta.webp" alt="Logo Karta" className="w-8 h-8 object-contain" />
+            <div className="text-left text-xs text-[#161F33]/75 font-medium leading-tight">
+              <b className="block text-[#161F33] text-sm">Karang Taruna FKPGR 02</b>
+              Forum Komunikasi Pemuda Gotong Royong
+            </div>
+          </div>
+          <div className="text-xs font-mono font-bold text-[#161F33]/70">
+            KIOS PHOTOBOOTH · RW 02 · 2026
+          </div>
         </div>
-      </motion.div>
+      </footer>
     </div>
   );
 };

@@ -31,10 +31,10 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
       className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-4xl mx-auto px-4 text-center select-none space-y-8"
     >
-      <div className="bg-[#FFFDF5] border-4 border-black p-8 sm:p-10 rounded-3xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-8 w-full text-black">
-        {/* Header with Official Karang Taruna FKPGR 02 Logo (Optimized WebP) */}
+      <div className="bg-[#FFFBF2] border border-[#E4D3A9] p-8 sm:p-10 rounded-3xl shadow-[0_18px_40px_-18px_rgba(22,31,51,0.35)] space-y-8 w-full text-[#161F33]">
+        {/* Header */}
         <div className="space-y-3 flex flex-col items-center">
-          <div className="w-16 h-16 bg-white rounded-2xl border-3 border-black p-1.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center">
+          <div className="w-14 h-14 bg-white rounded-2xl border border-[#E4D3A9] p-1.5 shadow-sm flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo-karta.webp"
@@ -42,59 +42,59 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
               className="w-full h-full object-contain"
             />
           </div>
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#00E676] text-black border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#2E9E5B] text-[#FFFBF2] border border-[#E4D3A9] shadow-sm">
             ✓ SESI SELESAI {sessionCode ? `(${sessionCode})` : ''}
           </div>
-          <h2 className="text-3xl sm:text-5xl font-black text-black uppercase tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-display font-normal text-[#161F33] uppercase tracking-tight">
             FOTO KAMU SIAP DIDOWNLOAD!
           </h2>
-          <p className="text-slate-800 text-sm sm:text-base font-bold">
+          <p className="text-[#161F33]/80 text-sm sm:text-base font-medium">
             Scan QR Code dengan kamera smartphone kamu untuk melihat & mendownload foto framenya!
           </p>
         </div>
 
         {/* Content Grid: Photo Preview + Live QR Code */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-          {/* Photo Display (2 Cols Portrait) */}
-          <div className="md:col-span-2 aspect-[2/3] max-h-[460px] bg-slate-950 rounded-2xl overflow-hidden border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center p-2 mx-auto">
+          {/* Photo Display */}
+          <div className="md:col-span-2 relative flex items-center justify-center max-h-[440px] sm:max-h-[46vh] p-1 mx-auto w-full">
             {imageSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={imageSrc}
                 alt="Hasil Foto Final"
-                className="w-auto h-full max-h-[440px] object-contain rounded-xl"
+                className="w-auto h-full max-h-[430px] sm:max-h-[44vh] object-contain rounded-2xl border border-[#E4D3A9] shadow-md bg-white"
               />
             ) : (
-              <div className="text-slate-400 text-sm font-bold">Final Master Image Preview</div>
+              <div className="text-[#161F33]/60 text-sm font-bold">Final Master Image Preview</div>
             )}
           </div>
 
-          {/* Real QR Code SVG Component (1 Col Neobrutalist Card) */}
-          <div className="bg-[#FFE600] p-6 rounded-2xl border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center space-y-4">
-            <div className="bg-white p-3 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          {/* Real QR Code SVG Component */}
+          <div className="bg-[#161F33] p-6 rounded-2xl border border-[#E4D3A9] shadow-lg flex flex-col items-center justify-center space-y-4 text-[#FFFBF2]">
+            <div className="bg-white p-3 rounded-xl border border-[#E4D3A9]">
               <QRCodeSVG
                 value={qrUrl}
                 size={144}
                 bgColor="#ffffff"
-                fgColor="#000000"
+                fgColor="#161F33"
                 level="M"
               />
             </div>
             <div>
-              <span className="text-xs text-black font-black uppercase block tracking-wider">
+              <span className="text-xs text-[#F0C878] font-bold uppercase block tracking-wider">
                 SCAN QR UNTUK DOWNLOAD
               </span>
             </div>
           </div>
         </div>
 
-        {/* Action Button: Single "🚀 SESI BARU" button on Laptop */}
+        {/* Action Button: Single "🚀 MULAI SESI BARU" button */}
         <div className="pt-4 flex justify-center">
           <motion.button
-            whileHover={{ scale: 1.03, x: -3, y: -3 }}
-            whileTap={{ scale: 0.97, x: 3, y: 3 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onNewSession}
-            className="w-full sm:w-auto px-12 py-4.5 rounded-2xl bg-[#0052FF] hover:bg-[#0046DB] text-white font-black text-xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-3 cursor-pointer uppercase transition-all"
+            className="w-full sm:w-auto px-12 py-4 rounded-full bg-[#C8102E] hover:bg-[#7C0C20] text-[#FFFBF2] font-bold text-base sm:text-lg border-none shadow-[0_14px_28px_-12px_rgba(200,16,46,0.55)] flex items-center justify-center gap-3 cursor-pointer uppercase transition-all tracking-wide"
           >
             <span>🚀 MULAI SESI BARU</span>
           </motion.button>

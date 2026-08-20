@@ -1,26 +1,89 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --merah: #C8102E;
+  --merah-tua: #7C0C20;
+  --putih: #FFFBF2;
+  --kertas: #FBF2DF;
+  --emas: #D9A441;
+  --emas-terang: #F0C878;
+  --navy: #161F33;
+  --navy-70: rgba(22, 31, 51, 0.7);
+  --line: #E4D3A9;
+  --radius-lg: 28px;
+  --radius-sm: 14px;
+  --shadow-card: 0 18px 40px -18px rgba(22, 31, 51, 0.35);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --font-display: var(--font-anton), sans-serif;
+  --font-mono: var(--font-space-mono), monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--putih);
+  color: var(--navy);
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* subtle batik-dot texture on the page background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(200, 16, 46, 0.05) 1.4px, transparent 1.4px);
+  background-size: 22px 22px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.font-display {
+  font-family: var(--font-anton), sans-serif;
+}
+
+.font-mono {
+  font-family: var(--font-space-mono), monospace;
+}
+
+/* Garland Bunting Flag Sway Animation */
+.flag {
+  transform-origin: top center;
+  animation: sway 3.4s ease-in-out infinite;
+}
+.flag:nth-child(odd) {
+  animation-duration: 3.9s;
+}
+.flag:nth-child(3n) {
+  animation-delay: 0.4s;
+}
+.flag:nth-child(4n) {
+  animation-delay: 0.9s;
+}
+@keyframes sway {
+  0%, 100% {
+    transform: rotate(-3.5deg);
+  }
+  50% {
+    transform: rotate(3.5deg);
+  }
+}
+
+/* Floating Photostrip Animation */
+@keyframes floaty {
+  0%, 100% {
+    transform: rotate(4.5deg) translateY(0);
+  }
+  50% {
+    transform: rotate(3deg) translateY(-9px);
+  }
+}
+.animate-floaty {
+  animation: floaty 6s ease-in-out infinite;
+}
+.animate-floaty-reverse {
+  animation: floaty 6s ease-in-out infinite reverse;
 }
