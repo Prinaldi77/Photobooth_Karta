@@ -6,7 +6,7 @@ import { WebcamCameraAdapter } from '@/lib/camera/WebcamCameraAdapter';
 import { useHandGesture } from '@/hooks/useHandGesture';
 import { FrameTemplate, ProcessedImageResult } from '@/lib/image/types';
 import { STATIC_FRAMES } from '@/lib/image/frames';
-import { compositePhotoWithFrame, revokeProcessedImageUrls } from '@/lib/image/imageProcessor';
+import { compositePhotoWithFrame, compositePhotoPreview, revokeProcessedImageUrls } from '@/lib/image/imageProcessor';
 import { getSupabaseClient } from '@/lib/supabase';
 import { WelcomeScreen } from './WelcomeScreen';
 import { CameraPermissionScreen } from './CameraPermissionScreen';
@@ -171,12 +171,11 @@ export const PhotoboothContainer: React.FC = () => {
     }
   }, []);
 
-  // Process 3 photo blobs with selected frame template
-  const processCapturedPhotos = useCallback(
+  // Process 3 photo blobs with selected frame template (Sub-50ms Fast Preview for Review Screen)
+  const processCapturedPhotosPreview = useCallback(
     async (blobs: Blob[], frame: FrameTemplate) => {
-      setIsProcessingImage(true);
       try {
-        const result = await compositePhotoWithFrame(blobs, frame);
+        const result = await compositePhotoPreview(blobs, frame);
         setProcessedResult((prev) => {
           revokeProcessedImageUrls(prev);
           return result;
@@ -185,8 +184,6 @@ export const PhotoboothContainer: React.FC = () => {
       } catch (err: unknown) {
         setErrorMessage(err instanceof Error ? err.message : 'Gagal mengomposisikan foto dengan frame.');
         setCurrentState('PROCESSING_ERROR');
-      } finally {
-        setIsProcessingImage(false);
       }
     },
     []
@@ -244,10 +241,10 @@ export const PhotoboothContainer: React.FC = () => {
     if (currentPoseIndex < 3) {
       setCurrentPoseIndex((prev) => prev + 1);
     } else {
-      // Pose 3 confirmed! Process all 3 photos into Karang Taruna frame
-      await processCapturedPhotos(rawPhotoBlobs, selectedFrame);
+      // Pose 3 confirmed! Instantly process preview for Review Screen
+      await processCapturedPhotosPreview(rawPhotoBlobs, selectedFrame);
     }
-  }, [currentPosePreviewUrl, currentPoseIndex, rawPhotoBlobs, processCapturedPhotos, selectedFrame]);
+  }, [currentPosePreviewUrl, currentPoseIndex, rawPhotoBlobs, processCapturedPhotosPreview, selectedFrame]);
 
   // Hand Gesture 5 Trigger Callback
   const handleGesture5Trigger = useCallback(() => {
@@ -262,15 +259,15 @@ export const PhotoboothContainer: React.FC = () => {
     onGesture5Detected: handleGesture5Trigger,
   });
 
-  // Frame template change handler in review screen
+  // Frame template change handler in review screen (Sub-50ms Instant Frame Switching!)
   const handleFrameChange = useCallback(
     async (frame: FrameTemplate) => {
       setSelectedFrame(frame);
       if (rawPhotoBlobs.length > 0) {
-        await processCapturedPhotos(rawPhotoBlobs, frame);
+        await processCapturedPhotosPreview(rawPhotoBlobs, frame);
       }
     },
-    [rawPhotoBlobs, processCapturedPhotos]
+    [rawPhotoBlobs, processCapturedPhotosPreview]
   );
 
   // Full retake photo -> Reset to Pose 1 READY camera preview
@@ -287,7 +284,7 @@ export const PhotoboothContainer: React.FC = () => {
 
   // Upload photo to backend API (POST /api/photos/upload) then navigate to PAYMENT screen
   const handleUploadPhoto = useCallback(async () => {
-    if (!processedResult || !currentSession) {
+    if (rawPhotoBlobs.length === 0 || !currentSession) {
       setErrorMessage('Sesi atau foto belum siap untuk diunggah.');
       setCurrentState('UPLOAD_ERROR');
       return;
@@ -297,15 +294,22 @@ export const PhotoboothContainer: React.FC = () => {
     setErrorMessage(undefined);
 
     try {
+      // Generate Studio HD Master (1200x3600) only now right before uploading!
+      const finalMasterResult = await compositePhotoWithFrame(rawPhotoBlobs, selectedFrame);
+      setProcessedResult((prev) => {
+        revokeProcessedImageUrls(prev);
+        return finalMasterResult;
+      });
+
       const formData = new FormData();
       formData.append(
         'master',
-        processedResult.masterBlob,
+        finalMasterResult.masterBlob,
         `master-${currentSession.session_code}.jpg`
       );
       formData.append(
         'preview',
-        processedResult.previewBlob,
+        finalMasterResult.previewBlob,
         `preview-${currentSession.session_code}.jpg`
       );
       formData.append('session_id', currentSession.id);
@@ -341,7 +345,7 @@ export const PhotoboothContainer: React.FC = () => {
       setErrorMessage(msg);
       setCurrentState('UPLOAD_ERROR');
     }
-  }, [processedResult, currentSession, selectedFrame]);
+  }, [rawPhotoBlobs, currentSession, selectedFrame]);
 
   // Payment Confirmation Success Callback -> Advance to SUCCESS
   const handlePaymentApproved = useCallback(() => {

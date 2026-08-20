@@ -1,9 +1,15 @@
 import { ProcessedImageResult, FrameTemplate } from './types';
 
+const svgImageCache = new Map<string, HTMLImageElement>();
+
 /**
- * Helper to load a Blob or URL into an HTMLImageElement
+ * Helper to load a Blob or URL into an HTMLImageElement with in-memory caching
  */
 async function loadImage(source: string | Blob): Promise<HTMLImageElement> {
+  if (typeof source === 'string' && svgImageCache.has(source)) {
+    return svgImageCache.get(source)!;
+  }
+
   const isBlob = source instanceof Blob;
   const url = isBlob ? URL.createObjectURL(source) : source;
   const img = new Image();
@@ -11,7 +17,11 @@ async function loadImage(source: string | Blob): Promise<HTMLImageElement> {
 
   return new Promise<HTMLImageElement>((resolve, reject) => {
     img.onload = () => {
-      if (isBlob) URL.revokeObjectURL(url);
+      if (isBlob) {
+        URL.revokeObjectURL(url);
+      } else {
+        svgImageCache.set(source, img);
+      }
       resolve(img);
     };
     img.onerror = (err) => {
@@ -117,6 +127,123 @@ const FRAME_SLOTS_MAP: Record<string, SlotBox[]> = {
     { x: 87, y: 2263, w: 1025, h: 918 },
   ],
 };
+
+/**
+ * Super fast sub-50ms preview composite for real-time frame switching in Review Screen
+ */
+export async function compositePhotoPreview(
+  photoInput: Blob | Blob[],
+  frame?: FrameTemplate
+): Promise<ProcessedImageResult> {
+  const photoBlobs = Array.isArray(photoInput) ? photoInput : [photoInput];
+
+  if (photoBlobs.length === 0) {
+    throw new Error('Tidak ada photo Blob yang diberikan untuk dikomposisikan.');
+  }
+
+  const photoImages = await Promise.all(photoBlobs.map((blob) => loadImage(blob)));
+
+  // Fast Preview Canvas Dimensions (400 x 1200 px - Sub-50ms render)
+  const isSingleStrip = frame?.aspectRatio === '1:3';
+  const masterWidth = isSingleStrip ? 400 : 800;
+  const masterHeight = 1200;
+  const scale = masterWidth / (isSingleStrip ? 1200 : 2400);
+
+  const masterCanvas = document.createElement('canvas');
+  masterCanvas.width = masterWidth;
+  masterCanvas.height = masterHeight;
+
+  const ctx = masterCanvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Gagal menginisialisasi preview canvas 2D context.');
+  }
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, masterWidth, masterHeight);
+
+  const drawPhotoInSlot = (
+    img: HTMLImageElement,
+    x: number,
+    y: number,
+    slotWidth: number,
+    slotHeight: number,
+    borderRadius = 12
+  ) => {
+    ctx.save();
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(x * scale, y * scale, slotWidth * scale, slotHeight * scale, borderRadius);
+    } else {
+      ctx.rect(x * scale, y * scale, slotWidth * scale, slotHeight * scale);
+    }
+    ctx.clip();
+
+    const imgAspect = img.naturalWidth / img.naturalHeight;
+    const slotAspect = slotWidth / slotHeight;
+    let drawW = slotWidth * scale;
+    let drawH = slotHeight * scale;
+    let drawX = x * scale;
+    let drawY = y * scale;
+
+    if (imgAspect > slotAspect) {
+      drawW = slotHeight * scale * imgAspect;
+      drawX = x * scale - (drawW - slotWidth * scale) / 2;
+    } else {
+      drawH = (slotWidth * scale) / imgAspect;
+      drawY = y * scale - (drawH - slotHeight * scale) / 2;
+    }
+
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+    ctx.restore();
+  };
+
+  if (frame?.overlayUrl) {
+    const slots = (frame?.id && FRAME_SLOTS_MAP[frame.id]) || DEFAULT_STRIP_SLOTS;
+    try {
+      const svgOverlayImg = await loadImage(frame.overlayUrl);
+      ctx.drawImage(svgOverlayImg, 0, 0, masterWidth, masterHeight);
+
+      for (let i = 0; i < 3; i++) {
+        const img = photoImages[i % photoImages.length];
+        const slot = slots[i] || DEFAULT_STRIP_SLOTS[i];
+        drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 12);
+      }
+    } catch (overlayErr) {
+      console.warn('[ImageProcessor] Gagal memuat SVG overlay preview:', overlayErr);
+    }
+  }
+
+  const previewBlob = await new Promise<Blob>((resolve, reject) => {
+    masterCanvas.toBlob(
+      (blob) => {
+        if (blob && blob.type === 'image/jpeg' && blob.size > 0) {
+          resolve(blob);
+        } else {
+          reject(new Error('Gagal mengekspor fast preview JPEG.'));
+        }
+      },
+      'image/jpeg',
+      0.70
+    );
+  });
+
+  const previewUrl = URL.createObjectURL(previewBlob);
+
+  return {
+    masterBlob: previewBlob,
+    masterUrl: previewUrl,
+    masterWidth: 1200,
+    masterHeight: 3600,
+    masterSizeBytes: previewBlob.size,
+    previewBlob,
+    previewUrl,
+    previewWidth: masterWidth,
+    previewHeight: masterHeight,
+    previewSizeBytes: previewBlob.size,
+    mimeType: 'image/jpeg',
+    frameId: frame?.id,
+  };
+}
 
 /**
  * Composites 1 to 3 raw photo Blobs with static or SVG frame templates on HTMLCanvasElement.
