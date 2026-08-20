@@ -24,22 +24,29 @@ export const CaptureReviewScreen: React.FC<CaptureReviewScreenProps> = ({
   onConfirm,
   isProcessing = false,
 }) => {
+  const [isZoomOpen, setIsZoomOpen] = React.useState<boolean>(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, y: 15 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-      className="relative w-full max-w-4xl mx-auto flex flex-col items-center justify-center space-y-6 select-none px-4 py-4"
+      className="relative w-full max-w-5xl mx-auto flex flex-col items-center justify-center space-y-4 select-none px-4 py-2"
     >
-      {/* Single Strip Captured Image Viewport (Tight Snug Fit, Zero Side Gaps) */}
-      <div className="relative flex items-center justify-center max-h-[440px] sm:max-h-[46vh] p-1">
+      {/* Single Strip Captured Image Viewport (Enlarged Preview) */}
+      <div className="relative flex flex-col items-center justify-center max-h-[580px] sm:max-h-[60vh] p-1 group">
         {imageSrc ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imageSrc}
-            alt="Hasil Capture Photobooth Single Strip 3-Pose"
-            className="w-auto h-full max-h-[430px] sm:max-h-[44vh] object-contain rounded-2xl border border-[#E4D3A9] shadow-[0_18px_40px_-18px_rgba(22,31,51,0.35)] bg-white"
-          />
+          <div className="relative cursor-zoom-in" onClick={() => setIsZoomOpen(true)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageSrc}
+              alt="Hasil Capture Photobooth Single Strip 3-Pose"
+              className="w-auto h-full max-h-[560px] sm:max-h-[58vh] object-contain rounded-2xl border-2 border-[#E4D3A9] shadow-[0_20px_45px_-15px_rgba(22,31,51,0.4)] bg-white transition-all group-hover:scale-[1.01]"
+            />
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#161F33]/90 text-[#F0C878] text-[11px] font-bold px-3 py-1 rounded-full border border-[#D9A441] shadow-md opacity-90 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 whitespace-nowrap">
+              <span>🔍 KLIK UNTUK PERBESAR</span>
+            </div>
+          </div>
         ) : (
           <div className="text-[#161F33] font-bold">Capture Preview Placeholder</div>
         )}
@@ -62,7 +69,7 @@ export const CaptureReviewScreen: React.FC<CaptureReviewScreenProps> = ({
       )}
 
       {/* Action Bar */}
-      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 w-full pt-2">
+      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 w-full pt-1">
         <motion.button
           whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.98 }}
@@ -94,6 +101,29 @@ export const CaptureReviewScreen: React.FC<CaptureReviewScreenProps> = ({
           </svg>
         </motion.button>
       </div>
+
+      {/* Lightbox Zoom Fullscreen Modal */}
+      {isZoomOpen && imageSrc && (
+        <div
+          className="fixed inset-0 z-50 bg-[#161F33]/95 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setIsZoomOpen(false)}
+        >
+          <div className="relative max-h-[92vh] max-w-full flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageSrc}
+              alt="Zoom View Photostrip"
+              className="max-h-[88vh] w-auto object-contain rounded-2xl border-2 border-[#D9A441] shadow-2xl"
+            />
+          </div>
+          <button
+            onClick={() => setIsZoomOpen(false)}
+            className="mt-4 px-6 py-2 rounded-full bg-[#C8102E] text-[#FFFBF2] font-bold text-sm border border-[#D9A441] shadow-lg cursor-pointer"
+          >
+            ✕ TUTUP (CLOSE)
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };

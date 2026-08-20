@@ -19,6 +19,7 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
   sessionCode,
   onNewSession,
 }) => {
+  const [isZoomOpen, setIsZoomOpen] = React.useState<boolean>(false);
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
   
   // Point QR code to mobile download landing page /result/[photoId]
@@ -29,7 +30,7 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-      className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-4xl mx-auto px-4 text-center select-none space-y-8"
+      className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-5xl mx-auto px-4 text-center select-none space-y-8"
     >
       <div className="bg-[#FFFBF2] border border-[#E4D3A9] p-8 sm:p-10 rounded-3xl shadow-[0_18px_40px_-18px_rgba(22,31,51,0.35)] space-y-8 w-full text-[#161F33]">
         {/* Header */}
@@ -55,15 +56,20 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
 
         {/* Content Grid: Photo Preview + Live QR Code */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-          {/* Photo Display */}
-          <div className="md:col-span-2 relative flex items-center justify-center max-h-[440px] sm:max-h-[46vh] p-1 mx-auto w-full">
+          {/* Photo Display (Enlarged) */}
+          <div className="md:col-span-2 relative flex items-center justify-center max-h-[540px] sm:max-h-[58vh] p-1 mx-auto w-full group">
             {imageSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={imageSrc}
-                alt="Hasil Foto Final"
-                className="w-auto h-full max-h-[430px] sm:max-h-[44vh] object-contain rounded-2xl border border-[#E4D3A9] shadow-md bg-white"
-              />
+              <div className="relative cursor-zoom-in" onClick={() => setIsZoomOpen(true)}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imageSrc}
+                  alt="Hasil Foto Final"
+                  className="w-auto h-full max-h-[520px] sm:max-h-[55vh] object-contain rounded-2xl border-2 border-[#E4D3A9] shadow-md bg-white transition-all group-hover:scale-[1.01]"
+                />
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#161F33]/90 text-[#F0C878] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#D9A441] shadow-md opacity-90 group-hover:opacity-100 transition-opacity flex items-center gap-1 whitespace-nowrap">
+                  <span>🔍 KLIK UNTUK PERBESAR</span>
+                </div>
+              </div>
             ) : (
               <div className="text-[#161F33]/60 text-sm font-bold">Final Master Image Preview</div>
             )}
@@ -100,6 +106,29 @@ export const ResultSuccessScreen: React.FC<ResultSuccessScreenProps> = ({
           </motion.button>
         </div>
       </div>
+
+      {/* Lightbox Zoom Fullscreen Modal */}
+      {isZoomOpen && imageSrc && (
+        <div
+          className="fixed inset-0 z-50 bg-[#161F33]/95 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setIsZoomOpen(false)}
+        >
+          <div className="relative max-h-[92vh] max-w-full flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageSrc}
+              alt="Zoom View Photostrip"
+              className="max-h-[88vh] w-auto object-contain rounded-2xl border-2 border-[#D9A441] shadow-2xl"
+            />
+          </div>
+          <button
+            onClick={() => setIsZoomOpen(false)}
+            className="mt-4 px-6 py-2 rounded-full bg-[#C8102E] text-[#FFFBF2] font-bold text-sm border border-[#D9A441] shadow-lg cursor-pointer"
+          >
+            ✕ TUTUP (CLOSE)
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };

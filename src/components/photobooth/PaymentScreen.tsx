@@ -55,6 +55,8 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
     };
   }, [sessionCode, sessionId, onPaymentSuccess, onBackToRetake]);
 
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.94, y: 20 }}
@@ -87,21 +89,24 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
         {/* Content Grid: Photo Preview with Watermark + Payment Method Selector */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Photo Preview Card with Subtle Watermark Badge (5 cols) */}
-          <div className="lg:col-span-5 relative flex items-center justify-center max-h-[440px] sm:max-h-[46vh] p-1 mx-auto w-full">
+          {/* Photo Preview Card with Subtle Watermark Badge (5 cols, Enlarged) */}
+          <div className="lg:col-span-5 relative flex items-center justify-center max-h-[520px] sm:max-h-[55vh] p-1 mx-auto w-full group">
             {imageSrc ? (
-              <div className="relative inline-block h-full max-h-[430px] sm:max-h-[45vh]">
+              <div className="relative inline-block h-full max-h-[500px] sm:max-h-[53vh] cursor-zoom-in" onClick={() => setIsZoomOpen(true)}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imageSrc}
                   alt="Hasil Foto Pratinjau 3 Pose"
-                  className="w-auto h-full max-h-[430px] sm:max-h-[45vh] object-contain rounded-2xl border border-[#E4D3A9] shadow-md bg-white"
+                  className="w-auto h-full max-h-[500px] sm:max-h-[53vh] object-contain rounded-2xl border-2 border-[#E4D3A9] shadow-md bg-white transition-all group-hover:scale-[1.01]"
                 />
-                {/* Subtle Non-Intrusive Watermark Badge */}
+                {/* Watermark & Zoom Badge */}
                 <div className="absolute top-3 right-3 pointer-events-none z-10">
                   <span className="text-[10px] font-bold text-[#FFFBF2] bg-[#161F33]/85 px-2.5 py-1 rounded-full border border-[#E4D3A9] uppercase tracking-wider shadow-md">
                     🔒 PREVIEW FOTO
                   </span>
+                </div>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#161F33]/90 text-[#F0C878] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#D9A441] shadow-md opacity-90 group-hover:opacity-100 transition-opacity flex items-center gap-1 whitespace-nowrap">
+                  <span>🔍 KLIK UNTUK PERBESAR</span>
                 </div>
               </div>
             ) : (
@@ -200,6 +205,29 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Lightbox Zoom Fullscreen Modal */}
+      {isZoomOpen && imageSrc && (
+        <div
+          className="fixed inset-0 z-50 bg-[#161F33]/95 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setIsZoomOpen(false)}
+        >
+          <div className="relative max-h-[92vh] max-w-full flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageSrc}
+              alt="Zoom View Photostrip"
+              className="max-h-[88vh] w-auto object-contain rounded-2xl border-2 border-[#D9A441] shadow-2xl"
+            />
+          </div>
+          <button
+            onClick={() => setIsZoomOpen(false)}
+            className="mt-4 px-6 py-2 rounded-full bg-[#C8102E] text-[#FFFBF2] font-bold text-sm border border-[#D9A441] shadow-lg cursor-pointer"
+          >
+            ✕ TUTUP (CLOSE)
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
