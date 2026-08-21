@@ -10,6 +10,14 @@ export const STATIC_FRAMES: FrameTemplate[] = [
     isActive: true,
   },
   {
+    id: 'frame-pahlawan',
+    name: 'HUT RI 81 Pahlawan (Single Strip 3-Pose)',
+    overlayUrl: '/frames/frame-photobooth-hutri81-pahlawan.svg',
+    borderColor: '#D9A441',
+    aspectRatio: '1:3',
+    isActive: true,
+  },
+  {
     id: 'frame-2',
     name: 'Classic Vintage (Single Strip 3-Pose)',
     overlayUrl: '/frames/frame-2.svg',
