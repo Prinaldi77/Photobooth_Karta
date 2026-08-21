@@ -130,6 +130,30 @@ export default function OperatorPage() {
     }
   }, [updateLunasCount]);
 
+  // 1-Click Fast Storage Cleanup from Operator Phone
+  const handleCleanStorage = useCallback(async () => {
+    if (!confirm('Apakah Anda yakin ingin menghapus semua file foto lama di Supabase Storage untuk mengosongkan ruang penyimpanan? (Catatan Kas Keuangan TIDAK akan terhapus)')) {
+      return;
+    }
+
+    try {
+      setAccSuccessMessage('⏳ Membersihkan Supabase Storage...');
+      const res = await fetch('/api/photos/cleanup', { method: 'POST' });
+      const json = await res.json();
+
+      if (json.success) {
+        setAccSuccessMessage(`✓ Sukses mengosongkan ${json.data?.deleted_count || 0} file foto dari Storage!`);
+      } else {
+        setAccSuccessMessage('❌ Gagal membersihkan storage');
+      }
+      setTimeout(() => setAccSuccessMessage(null), 4500);
+    } catch (err) {
+      console.error('Gagal membersihkan storage:', err);
+      setAccSuccessMessage('❌ Gagal menghubungi API cleanup');
+      setTimeout(() => setAccSuccessMessage(null), 3000);
+    }
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#FFFDF5] text-black p-4 sm:p-6 flex flex-col items-center justify-start select-none font-sans">
       <div className="max-w-md w-full mx-auto space-y-6 pt-2">
@@ -225,13 +249,20 @@ export default function OperatorPage() {
             </div>
           </div>
 
-          <div className="pt-2 flex flex-col gap-2">
+          <div className="pt-2 flex flex-col gap-2.5">
             <button
               type="button"
               onClick={handleResetLaptopRemote}
               className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] uppercase cursor-pointer transition-all"
             >
               🔄 RESET LAPTOP KE HALAMAN UTAMA
+            </button>
+            <button
+              type="button"
+              onClick={handleCleanStorage}
+              className="w-full py-2.5 rounded-xl bg-[#0052FF] hover:bg-[#0046DB] text-white font-black text-xs border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] uppercase cursor-pointer transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>🧹 1-CLICK BERSIHKAN STORAGE FOTO LAMA</span>
             </button>
             <button
               type="button"

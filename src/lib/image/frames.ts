@@ -2,6 +2,14 @@ import { FrameTemplate } from './types';
 
 export const STATIC_FRAMES: FrameTemplate[] = [
   {
+    id: 'frame-1',
+    name: 'Karta Kemerdekaan 81 (Single Strip 3-Pose)',
+    overlayUrl: '/frames/frame-1-karta-kemerdekaan.png',
+    borderColor: '#C8102E',
+    aspectRatio: '1:3',
+    isActive: true,
+  },
+  {
     id: 'frame-2',
     name: 'Classic Vintage (Single Strip 3-Pose)',
     overlayUrl: '/frames/frame-2.svg',

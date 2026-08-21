@@ -46,6 +46,11 @@ const DEFAULT_STRIP_SLOTS: SlotBox[] = [
 ];
 
 const FRAME_SLOTS_MAP: Record<string, SlotBox[]> = {
+  'frame-1': [
+    { x: 80, y: 440, w: 1040, h: 810 },
+    { x: 80, y: 1335, w: 1040, h: 810 },
+    { x: 80, y: 2230, w: 1040, h: 810 },
+  ],
   'frame-2': [
     { x: 120, y: 189, w: 960, h: 810 },
     { x: 120, y: 1339, w: 960, h: 810 },
