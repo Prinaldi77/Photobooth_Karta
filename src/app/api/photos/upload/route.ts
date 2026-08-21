@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     let mimeType = 'image/jpeg';
     let sessionId: string;
     let frameId: string | null = null;
+    let eventId = 'fkpgr02';
     let fileSize = 0;
 
     if (contentType.includes('multipart/form-data')) {
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
       mimeType = validation.masterFile.type || 'image/jpeg';
       sessionId = validation.sessionId;
       frameId = validation.frameId || null;
+      eventId = (formData.get('event_id') as string) || 'fkpgr02';
       fileSize = validation.masterFile.size;
     } else if (contentType.includes('application/json')) {
       const body = await request.json();
@@ -39,6 +41,7 @@ export async function POST(request: Request) {
       masterBuffer = Buffer.from(base64Data, 'base64');
       sessionId = body.session_id;
       frameId = body.frame_id || null;
+      eventId = body.event_id || 'fkpgr02';
       fileSize = masterBuffer.length;
     } else {
       return errorResponse(
@@ -61,6 +64,7 @@ export async function POST(request: Request) {
 
     const photoId = randomUUID();
     const timestamp = Date.now();
+    const storageFilePath = `${eventId}/master-${photoId}-${timestamp}.jpg`;
     const fileName = `master-${photoId}-${timestamp}.jpg`;
 
     // 1. Save in temporary fallback store immediately
@@ -68,19 +72,19 @@ export async function POST(request: Request) {
 
     let photoPublicUrl = `${appUrl}/api/photos/${photoId}/view`;
 
-    // 2. Upload to Supabase Storage bucket 'photos' (High Reliability Public CDN Storage)
+    // 2. Upload to Supabase Storage bucket 'photos' under isolated event subfolder (photos/fkpgr02/ or photos/karta_gja/)
     const supabase = getSupabaseServerClient();
     if (supabase) {
       try {
         const { error: storageError } = await supabase.storage
           .from('photos')
-          .upload(fileName, masterBuffer, {
+          .upload(storageFilePath, masterBuffer, {
             contentType: 'image/jpeg',
             upsert: true,
           });
 
         if (!storageError) {
-          const { data: urlData } = supabase.storage.from('photos').getPublicUrl(fileName);
+          const { data: urlData } = supabase.storage.from('photos').getPublicUrl(storageFilePath);
           if (urlData?.publicUrl) {
             photoPublicUrl = urlData.publicUrl;
           }
@@ -101,7 +105,7 @@ export async function POST(request: Request) {
       height: 3600,
       file_size_bytes: fileSize,
       drive_file_id: fileName,
-      drive_folder_id: null,
+      drive_folder_id: eventId,
       drive_url: photoPublicUrl,
       preview_url: photoPublicUrl,
       frame_id: frameId,

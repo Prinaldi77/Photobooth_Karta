@@ -4,9 +4,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { PhotoboothState, Session, Photo } from '@/types/photobooth';
 import { WebcamCameraAdapter } from '@/lib/camera/WebcamCameraAdapter';
 import { useHandGesture } from '@/hooks/useHandGesture';
+import { useActiveEvent } from '@/hooks/useActiveEvent';
 import { FrameTemplate, ProcessedImageResult } from '@/lib/image/types';
-import { STATIC_FRAMES } from '@/lib/image/frames';
-import { compositePhotoWithFrame, compositePhotoPreview, revokeProcessedImageUrls } from '@/lib/image/imageProcessor';
+import { compositePhotoWithFrame, revokeProcessedImageUrls } from '@/lib/image/imageProcessor';
 import { getSupabaseClient } from '@/lib/supabase';
 import { WelcomeScreen } from './WelcomeScreen';
 import { CameraPermissionScreen } from './CameraPermissionScreen';
@@ -16,6 +16,8 @@ import { PaymentScreen } from './PaymentScreen';
 import { ResultSuccessScreen } from './ResultSuccessScreen';
 
 export const PhotoboothContainer: React.FC = () => {
+  const activeEvent = useActiveEvent();
+
   const [currentState, setCurrentState] = useState<PhotoboothState>('IDLE');
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [countdownCount, setCountdownCount] = useState<number>(3);
@@ -24,8 +26,15 @@ export const PhotoboothContainer: React.FC = () => {
   const [isCountdownActive, setIsCountdownActive] = useState<boolean>(false);
   const [availableDevices, setAvailableDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | undefined>();
-  const [selectedFrame, setSelectedFrame] = useState<FrameTemplate>(STATIC_FRAMES[0]);
+  const [selectedFrame, setSelectedFrame] = useState<FrameTemplate>(activeEvent.frames[0] || activeEvent.frames[0]);
   const [isProcessingImage, setIsProcessingImage] = useState<boolean>(false);
+
+  // Sync selected frame when activeEvent changes
+  useEffect(() => {
+    if (activeEvent.frames.length > 0) {
+      setSelectedFrame(activeEvent.frames[0]);
+    }
+  }, [activeEvent]);
 
   // Real Session & Photo Backend State
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
@@ -83,6 +92,7 @@ export const PhotoboothContainer: React.FC = () => {
 
     const channelNames = [
       'session_payment_default',
+      `session_payment_${activeEvent.id}_default`,
       currentSession?.session_code ? `session_payment_${currentSession.session_code}` : null,
       currentSession?.id ? `session_payment_${currentSession.id}` : null,
     ].filter(Boolean) as string[];
@@ -107,7 +117,7 @@ export const PhotoboothContainer: React.FC = () => {
     return () => {
       channels.forEach((ch) => supabase.removeChannel(ch));
     };
-  }, [currentSession, handleResetSession]);
+  }, [currentSession, handleResetSession, activeEvent.id]);
 
   // Step 1: 1-Click Instant Camera Start -> Create session & Start Camera immediately
   const handleStartCamera = useCallback(async () => {
@@ -121,7 +131,7 @@ export const PhotoboothContainer: React.FC = () => {
       const sessionRes = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_id: 'webcam-kiosk-1' }),
+        body: JSON.stringify({ device_id: 'webcam-kiosk-1', event_id: activeEvent.id }),
       });
       const sessionJson = await sessionRes.json();
 
@@ -143,7 +153,7 @@ export const PhotoboothContainer: React.FC = () => {
       setErrorMessage(msg);
       setCurrentState('CAMERA_ERROR');
     }
-  }, [selectedDeviceId]);
+  }, [selectedDeviceId, activeEvent.id]);
 
   // Connect video element & enumerate devices once ready
   useEffect(() => {
@@ -171,11 +181,12 @@ export const PhotoboothContainer: React.FC = () => {
     }
   }, []);
 
-  // Process 3 photo blobs with selected frame template (Sub-50ms Fast Preview for Review Screen)
-  const processCapturedPhotosPreview = useCallback(
+  // Process 3 photo blobs with selected frame template
+  const processCapturedPhotos = useCallback(
     async (blobs: Blob[], frame: FrameTemplate) => {
+      setIsProcessingImage(true);
       try {
-        const result = await compositePhotoPreview(blobs, frame);
+        const result = await compositePhotoWithFrame(blobs, frame);
         setProcessedResult((prev) => {
           revokeProcessedImageUrls(prev);
           return result;
@@ -184,6 +195,8 @@ export const PhotoboothContainer: React.FC = () => {
       } catch (err: unknown) {
         setErrorMessage(err instanceof Error ? err.message : 'Gagal mengomposisikan foto dengan frame.');
         setCurrentState('PROCESSING_ERROR');
+      } finally {
+        setIsProcessingImage(false);
       }
     },
     []
@@ -241,10 +254,10 @@ export const PhotoboothContainer: React.FC = () => {
     if (currentPoseIndex < 3) {
       setCurrentPoseIndex((prev) => prev + 1);
     } else {
-      // Pose 3 confirmed! Instantly process preview for Review Screen
-      await processCapturedPhotosPreview(rawPhotoBlobs, selectedFrame);
+      // Pose 3 confirmed! Process all 3 photos into Karang Taruna frame
+      await processCapturedPhotos(rawPhotoBlobs, selectedFrame);
     }
-  }, [currentPosePreviewUrl, currentPoseIndex, rawPhotoBlobs, processCapturedPhotosPreview, selectedFrame]);
+  }, [currentPosePreviewUrl, currentPoseIndex, rawPhotoBlobs, processCapturedPhotos, selectedFrame]);
 
   // Hand Gesture 5 Trigger Callback
   const handleGesture5Trigger = useCallback(() => {
@@ -259,15 +272,15 @@ export const PhotoboothContainer: React.FC = () => {
     onGesture5Detected: handleGesture5Trigger,
   });
 
-  // Frame template change handler in review screen (Sub-50ms Instant Frame Switching!)
+  // Frame template change handler in review screen
   const handleFrameChange = useCallback(
     async (frame: FrameTemplate) => {
       setSelectedFrame(frame);
       if (rawPhotoBlobs.length > 0) {
-        await processCapturedPhotosPreview(rawPhotoBlobs, frame);
+        await processCapturedPhotos(rawPhotoBlobs, frame);
       }
     },
-    [rawPhotoBlobs, processCapturedPhotosPreview]
+    [rawPhotoBlobs, processCapturedPhotos]
   );
 
   // Full retake photo -> Reset to Pose 1 READY camera preview
@@ -284,7 +297,7 @@ export const PhotoboothContainer: React.FC = () => {
 
   // Upload photo to backend API (POST /api/photos/upload) then navigate to PAYMENT screen
   const handleUploadPhoto = useCallback(async () => {
-    if (rawPhotoBlobs.length === 0 || !currentSession) {
+    if (!processedResult || !currentSession) {
       setErrorMessage('Sesi atau foto belum siap untuk diunggah.');
       setCurrentState('UPLOAD_ERROR');
       return;
@@ -294,26 +307,20 @@ export const PhotoboothContainer: React.FC = () => {
     setErrorMessage(undefined);
 
     try {
-      // Generate Studio HD Master (1200x3600) only now right before uploading!
-      const finalMasterResult = await compositePhotoWithFrame(rawPhotoBlobs, selectedFrame);
-      setProcessedResult((prev) => {
-        revokeProcessedImageUrls(prev);
-        return finalMasterResult;
-      });
-
       const formData = new FormData();
       formData.append(
         'master',
-        finalMasterResult.masterBlob,
+        processedResult.masterBlob,
         `master-${currentSession.session_code}.jpg`
       );
       formData.append(
         'preview',
-        finalMasterResult.previewBlob,
+        processedResult.previewBlob,
         `preview-${currentSession.session_code}.jpg`
       );
       formData.append('session_id', currentSession.id);
       formData.append('session_code', currentSession.session_code);
+      formData.append('event_id', activeEvent.id);
       if (selectedFrame?.id) {
         formData.append('frame_id', selectedFrame.id);
       }
@@ -345,7 +352,7 @@ export const PhotoboothContainer: React.FC = () => {
       setErrorMessage(msg);
       setCurrentState('UPLOAD_ERROR');
     }
-  }, [rawPhotoBlobs, currentSession, selectedFrame]);
+  }, [processedResult, currentSession, selectedFrame, activeEvent.id]);
 
   // Payment Confirmation Success Callback -> Advance to SUCCESS
   const handlePaymentApproved = useCallback(() => {
@@ -353,9 +360,9 @@ export const PhotoboothContainer: React.FC = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#FFFDF5] text-black flex flex-col items-center justify-center p-4 sm:p-8 select-none">
+    <main className="min-h-screen bg-[#FFFDF5] text-black flex flex-col items-center justify-center p-4 sm:p-8 select-none font-sans">
       {/* State Machine UI Flow Router */}
-      {currentState === 'IDLE' && <WelcomeScreen onStart={handleStartCamera} />}
+      {currentState === 'IDLE' && <WelcomeScreen eventConfig={activeEvent} onStart={handleStartCamera} />}
 
       {/* 1-Click Loading State */}
       {currentState === 'REQUESTING_PERMISSION' && (
@@ -364,7 +371,7 @@ export const PhotoboothContainer: React.FC = () => {
           <div className="space-y-2">
             <h3 className="text-2xl font-black uppercase">Mengakses Kamera...</h3>
             <p className="text-slate-800 text-sm font-bold">
-              Memulai stream webcam dan menyiapkan sesi photobooth.
+              Memulai stream webcam dan menyiapkan sesi photobooth {activeEvent.name}.
             </p>
           </div>
         </div>
@@ -405,6 +412,7 @@ export const PhotoboothContainer: React.FC = () => {
           imageSrc={processedResult?.previewUrl || null}
           processedResult={processedResult}
           selectedFrameId={selectedFrame.id}
+          availableFrames={activeEvent.frames}
           onSelectFrame={handleFrameChange}
           onRetake={handleRetakeAll}
           onConfirm={handleUploadPhoto}
@@ -457,6 +465,7 @@ export const PhotoboothContainer: React.FC = () => {
       {/* Step 5: PAYMENT Screen */}
       {currentState === 'PAYMENT' && (
         <PaymentScreen
+          eventConfig={activeEvent}
           imageSrc={processedResult?.previewUrl || null}
           sessionCode={currentSession?.session_code}
           sessionId={currentSession?.id}
@@ -468,6 +477,7 @@ export const PhotoboothContainer: React.FC = () => {
       {/* Step 6: SUCCESS Screen (QR Code Download HP) */}
       {currentState === 'SUCCESS' && (
         <ResultSuccessScreen
+          eventConfig={activeEvent}
           imageSrc={processedResult?.masterUrl || processedResult?.previewUrl || null}
           photoId={uploadedPhoto?.id}
           driveUrl={uploadedPhoto?.drive_url}

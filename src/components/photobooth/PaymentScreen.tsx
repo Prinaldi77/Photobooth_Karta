@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getSupabaseClient } from '@/lib/supabase';
+import { EventConfig } from '@/config/events';
 
 interface PaymentScreenProps {
+  eventConfig?: EventConfig;
   imageSrc: string | null;
   sessionCode?: string;
   sessionId?: string;
@@ -13,6 +15,7 @@ interface PaymentScreenProps {
 }
 
 export const PaymentScreen: React.FC<PaymentScreenProps> = ({
+  eventConfig,
   imageSrc,
   sessionCode,
   sessionId,
@@ -22,6 +25,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'qris' | 'cash'>('qris');
   const [isVerifying, setIsVerifying] = useState(false);
 
+  const priceText = eventConfig?.priceText || 'Rp 7.000';
+  const qrisSrc = eventConfig?.qrisUrl || '/qris-karta.webp';
+  const eventName = eventConfig?.name || 'KARANG TARUNA FKPGR 02';
+
   // Real-time listener from Operator Smartphone ACC signal via Supabase Broadcast Channel
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -29,8 +36,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
     const channelNames = [
       'session_payment_default',
+      eventConfig?.id ? `session_payment_${eventConfig.id}_default` : null,
       `session_payment_${sessionCode || sessionId || 'default'}`,
-    ];
+    ].filter(Boolean) as string[];
 
     const channels = channelNames.map((name) => {
       const channel = supabase.channel(name);
@@ -53,9 +61,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
     return () => {
       channels.forEach((ch) => supabase.removeChannel(ch));
     };
-  }, [sessionCode, sessionId, onPaymentSuccess, onBackToRetake]);
-
-  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  }, [sessionCode, sessionId, onPaymentSuccess, onBackToRetake, eventConfig?.id]);
 
   return (
     <motion.div
@@ -64,24 +70,24 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
       className="flex flex-col items-center justify-center min-h-[85vh] w-full max-w-5xl mx-auto px-4 text-center select-none py-6 font-sans"
     >
-      <div className="bg-[#FFFBF2] border border-[#E4D3A9] p-6 sm:p-10 rounded-3xl shadow-[0_18px_40px_-18px_rgba(22,31,51,0.35)] space-y-8 w-full text-[#161F33]">
+      <div className="bg-[#FFFDF5] border-4 border-black p-6 sm:p-10 rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-8 w-full text-black">
         {/* Header */}
         <div className="space-y-3 flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#161F33] text-[#FFFBF2] border border-[#E4D3A9] shadow-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#0052FF] text-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             <span>5. HALAMAN PEMBAYARAN SESI</span>
             {sessionCode && (
-              <span className="bg-[#F0C878] text-[#161F33] px-2 py-0.5 rounded font-mono border border-[#D9A441]">
+              <span className="bg-[#FFE600] text-black px-2 py-0.5 rounded font-mono border border-black">
                 #{sessionCode}
               </span>
             )}
           </div>
-          <h2 className="text-3xl sm:text-5xl font-display font-normal text-[#161F33] uppercase tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-black text-black uppercase tracking-tight">
             LANJUTKAN PEMBAYARAN
           </h2>
-          <p className="text-[#161F33]/80 text-sm sm:text-base font-medium">
+          <p className="text-slate-800 text-sm sm:text-base font-bold">
             Pilih metode pembayaran sebesar{' '}
-            <span className="bg-[#F0C878] px-2.5 py-0.5 rounded-md border border-[#D9A441] font-bold text-[#161F33]">
-              Rp 7.000
+            <span className="bg-[#FFE600] px-2.5 py-0.5 rounded-md border border-black font-black text-black">
+              {priceText}
             </span>{' '}
             untuk membuka QR Download HP.
           </p>
@@ -89,28 +95,25 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
         {/* Content Grid: Photo Preview with Watermark + Payment Method Selector */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Photo Preview Card with Subtle Watermark Badge (5 cols, Enlarged) */}
-          <div className="lg:col-span-5 relative flex items-center justify-center max-h-[520px] sm:max-h-[55vh] p-1 mx-auto w-full group">
+          {/* Photo Preview Card with Watermark (5 cols) */}
+          <div className="lg:col-span-5 aspect-[2/3] max-h-[460px] bg-slate-950 rounded-2xl overflow-hidden border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center p-2 mx-auto w-full">
             {imageSrc ? (
-              <div className="relative inline-block h-full max-h-[500px] sm:max-h-[53vh] cursor-zoom-in" onClick={() => setIsZoomOpen(true)}>
+              <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imageSrc}
                   alt="Hasil Foto Pratinjau 3 Pose"
-                  className="w-auto h-full max-h-[500px] sm:max-h-[53vh] object-contain rounded-2xl border-2 border-[#E4D3A9] shadow-md bg-white transition-all group-hover:scale-[1.01]"
+                  className="w-auto h-full max-h-[440px] object-contain rounded-xl"
                 />
-                {/* Watermark & Zoom Badge */}
-                <div className="absolute top-3 right-3 pointer-events-none z-10">
-                  <span className="text-[10px] font-bold text-[#FFFBF2] bg-[#161F33]/85 px-2.5 py-1 rounded-full border border-[#E4D3A9] uppercase tracking-wider shadow-md">
-                    🔒 PREVIEW FOTO
+                {/* Watermark Overlay */}
+                <div className="absolute inset-0 bg-black/20 pointer-events-none flex items-center justify-center">
+                  <span className="text-3xl font-black text-white/80 bg-black/60 px-6 py-2 rounded-2xl border-2 border-white tracking-widest rotate-[-12deg]">
+                    PREVIEW FOTO
                   </span>
                 </div>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#161F33]/90 text-[#F0C878] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-[#D9A441] shadow-md opacity-90 group-hover:opacity-100 transition-opacity flex items-center gap-1 whitespace-nowrap">
-                  <span>🔍 KLIK UNTUK PERBESAR</span>
-                </div>
-              </div>
+              </>
             ) : (
-              <div className="text-[#161F33]/60 text-sm font-bold">Pratinjau Foto 3 Pose</div>
+              <div className="text-slate-400 text-sm font-bold">Pratinjau Foto 3 Pose</div>
             )}
           </div>
 
@@ -121,73 +124,73 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setPaymentMethod('qris')}
-                className={`p-4 rounded-2xl border border-[#E4D3A9] text-center font-bold transition-all cursor-pointer ${
+                className={`p-4 rounded-2xl border-3 border-black text-center font-black transition-all cursor-pointer ${
                   paymentMethod === 'qris'
-                    ? 'bg-[#161F33] text-[#F0C878] shadow-md scale-[1.02] border-[#D9A441]'
-                    : 'bg-[#FBF2DF] text-[#161F33]/80 hover:bg-[#E4D3A9]/40 shadow-sm'
+                    ? 'bg-[#FFE600] text-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] scale-[1.02]'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                 }`}
               >
-                <div className="text-xl mb-1">📱 QRIS DIGITAL</div>
-                <div className="text-[11px] uppercase font-mono text-[#D9A441]">DANA / GoPay / OVO / m-Banking</div>
+                <div className="text-2xl mb-1">📱 QRIS DIGITAL</div>
+                <div className="text-xs uppercase font-mono">DANA / GoPay / OVO / m-Banking</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setPaymentMethod('cash')}
-                className={`p-4 rounded-2xl border border-[#E4D3A9] text-center font-bold transition-all cursor-pointer ${
+                className={`p-4 rounded-2xl border-3 border-black text-center font-black transition-all cursor-pointer ${
                   paymentMethod === 'cash'
-                    ? 'bg-[#C8102E] text-[#FFFBF2] shadow-md scale-[1.02] border-[#C8102E]'
-                    : 'bg-[#FBF2DF] text-[#161F33]/80 hover:bg-[#E4D3A9]/40 shadow-sm'
+                    ? 'bg-[#00E676] text-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] scale-[1.02]'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                 }`}
               >
-                <div className="text-xl mb-1">💵 CASH TUNAI</div>
-                <div className="text-[11px] uppercase font-mono">Bayar Tunai Ke Panitia</div>
+                <div className="text-2xl mb-1">💵 CASH TUNAI</div>
+                <div className="text-xs uppercase font-mono">Bayar Tunai Ke Panitia</div>
               </button>
             </div>
 
-            {/* Selected Method Display */}
+            {/* Selected Method Display (WebP Optimized) */}
             {paymentMethod === 'qris' ? (
-              <div className="bg-[#161F33] p-6 rounded-2xl border border-[#E4D3A9] shadow-lg text-[#FFFBF2] text-center space-y-4">
-                <div className="bg-white p-3 rounded-2xl border border-[#E4D3A9] inline-block mx-auto max-w-[320px]">
+              <div className="bg-[#0052FF] p-6 rounded-2xl border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-white text-center space-y-4">
+                <div className="bg-white p-3.5 rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] inline-block mx-auto max-w-[280px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/qris-karta.webp"
-                    alt="Official QRIS Photobooth NMID ID1026575232032 Rp 7.000"
-                    className="w-full h-auto max-h-[400px] object-contain rounded-lg"
+                    src={qrisSrc}
+                    alt={`QRIS DANA ${eventName} ${priceText}`}
+                    className="w-full h-auto max-h-[340px] object-contain rounded-lg"
                   />
                 </div>
                 <div className="space-y-1">
-                  <span className="text-lg font-bold block uppercase text-[#F0C878]">
-                    TARIF SESI: RP 7.000
+                  <span className="text-xl font-black block uppercase text-[#FFE600]">
+                    TARIF SESI: {priceText}
                   </span>
-                  <p className="text-xs text-[#FFFBF2]/80 font-medium">
-                    Scan kode QRIS Resmi di atas menggunakan aplikasi m-banking atau e-wallet (DANA, GoPay, OVO, ShopeePay, BCA, Mandiri, dll).
+                  <p className="text-xs font-bold text-white/90">
+                    Scan kode QRIS di atas menggunakan aplikasi m-banking atau e-wallet (DANA, GoPay, OVO, ShopeePay, dll).
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="bg-[#C8102E] p-8 rounded-2xl border border-[#E4D3A9] shadow-lg text-[#FFFBF2] text-center space-y-4">
-                <div className="w-14 h-14 bg-white text-[#C8102E] border border-[#E4D3A9] rounded-full flex items-center justify-center mx-auto text-2xl shadow-sm">
+              <div className="bg-[#00E676] p-8 rounded-2xl border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-black text-center space-y-4">
+                <div className="w-16 h-16 bg-white border-3 border-black rounded-full flex items-center justify-center mx-auto text-3xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                   💵
                 </div>
                 <div className="space-y-2">
-                  <span className="text-xl font-bold block uppercase">BAYAR TUNAI RP 7.000</span>
-                  <p className="text-sm text-[#FFFBF2]/90 font-medium leading-relaxed">
-                    Silakan serahkan uang tunai sebesar <strong className="underline font-bold">Rp 7.000</strong> kepada petugas Karang Taruna di sebelah booth photobooth.
+                  <span className="text-2xl font-black block uppercase">BAYAR TUNAI {priceText}</span>
+                  <p className="text-sm font-bold text-slate-900 leading-relaxed">
+                    Silakan serahkan uang tunai sebesar <strong className="underline">{priceText}</strong> kepada petugas {eventName} di sebelah booth photobooth.
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Waiting for Operator Status Box */}
-            <div className="bg-[#FBF2DF] p-5 rounded-2xl border border-[#E4D3A9] shadow-sm flex items-center gap-4">
-              <div className="w-3.5 h-3.5 rounded-full bg-[#D9A441] animate-ping flex-shrink-0"></div>
+            {/* Waiting for Operator Status Box (No Bypass Button on Laptop) */}
+            <div className="bg-white p-5 rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4">
+              <div className="w-4 h-4 rounded-full bg-[#FFE600] animate-ping border border-black flex-shrink-0"></div>
               <div className="text-left">
-                <span className="text-xs sm:text-sm font-bold text-[#161F33] block uppercase">
+                <span className="text-xs sm:text-sm font-black text-black block uppercase">
                   {isVerifying ? '✓ VERIFIKASI PEMBAYARAN LUNAS...' : '⏳ MENUNGGU KONFIRMASI OPERATOR HP'}
                 </span>
-                <span className="text-[11px] sm:text-xs font-semibold text-[#161F33]/70">
-                  Panitia Karang Taruna akan menekan konfirmasi dari HP Operator setelah pembayaran diterima.
+                <span className="text-[11px] sm:text-xs font-bold text-slate-600">
+                  Panitia {eventName} akan menekan konfirmasi dari HP Operator setelah pembayaran diterima.
                 </span>
               </div>
             </div>
@@ -197,7 +200,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               <button
                 type="button"
                 onClick={onBackToRetake}
-                className="px-6 py-2.5 rounded-full bg-[#FBF2DF] hover:bg-[#E4D3A9]/40 text-[#161F33] font-bold text-xs border border-[#E4D3A9] shadow-sm uppercase cursor-pointer transition-all"
+                className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-black font-black text-xs border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] uppercase cursor-pointer transition-all"
               >
                 ← FOTO ULANG
               </button>
@@ -205,29 +208,6 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Lightbox Zoom Fullscreen Modal */}
-      {isZoomOpen && imageSrc && (
-        <div
-          className="fixed inset-0 z-50 bg-[#161F33]/95 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-zoom-out"
-          onClick={() => setIsZoomOpen(false)}
-        >
-          <div className="relative max-h-[92vh] max-w-full flex items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageSrc}
-              alt="Zoom View Photostrip"
-              className="max-h-[88vh] w-auto object-contain rounded-2xl border-2 border-[#D9A441] shadow-2xl"
-            />
-          </div>
-          <button
-            onClick={() => setIsZoomOpen(false)}
-            className="mt-4 px-6 py-2 rounded-full bg-[#C8102E] text-[#FFFBF2] font-bold text-sm border border-[#D9A441] shadow-lg cursor-pointer"
-          >
-            ✕ TUTUP (CLOSE)
-          </button>
-        </div>
-      )}
     </motion.div>
   );
 };
