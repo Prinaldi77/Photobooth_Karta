@@ -46,10 +46,23 @@ export const DEFAULT_EVENT_ID = 'fkpgr02';
 
 export function getEventConfig(eventId?: string | null): EventConfig {
   if (!eventId) {
+    // 1. Check Vercel Environment Variable (for distinct Vercel deployments/subdomains)
     const envEvent = process.env.NEXT_PUBLIC_EVENT_ID;
     if (envEvent && EVENTS_CONFIG[envEvent]) {
       return EVENTS_CONFIG[envEvent];
     }
+
+    // 2. Check browser hostname auto-detection
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname.toLowerCase();
+      if (hostname.includes('gja')) {
+        return EVENTS_CONFIG['karta_gja'];
+      }
+      if (hostname.includes('fkpgr')) {
+        return EVENTS_CONFIG['fkpgr02'];
+      }
+    }
+
     return EVENTS_CONFIG[DEFAULT_EVENT_ID];
   }
 
