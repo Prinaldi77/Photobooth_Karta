@@ -26,13 +26,16 @@ export const PhotoboothContainer: React.FC = () => {
   const [isCountdownActive, setIsCountdownActive] = useState<boolean>(false);
   const [availableDevices, setAvailableDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | undefined>();
-  const [selectedFrame, setSelectedFrame] = useState<FrameTemplate>(activeEvent.frames[0] || activeEvent.frames[0]);
+  const [selectedFrame, setSelectedFrame] = useState<FrameTemplate>(activeEvent.frames[0]);
   const [isProcessingImage, setIsProcessingImage] = useState<boolean>(false);
 
   // Sync selected frame when activeEvent changes
   useEffect(() => {
     if (activeEvent.frames.length > 0) {
-      setSelectedFrame(activeEvent.frames[0]);
+      const timer = setTimeout(() => {
+        setSelectedFrame(activeEvent.frames[0]);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [activeEvent]);
 
@@ -410,7 +413,6 @@ export const PhotoboothContainer: React.FC = () => {
       {(currentState === 'REVIEW' || currentState === 'PROCESSING') && (
         <CaptureReviewScreen
           imageSrc={processedResult?.previewUrl || null}
-          processedResult={processedResult}
           selectedFrameId={selectedFrame.id}
           availableFrames={activeEvent.frames}
           onSelectFrame={handleFrameChange}

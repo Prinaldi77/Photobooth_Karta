@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSupabaseClient } from '@/lib/supabase';
 import { useActiveEvent } from '@/hooks/useActiveEvent';
 import { EVENTS_CONFIG, EventConfig } from '@/config/events';
 
-export default function OperatorPage() {
+function OperatorContent() {
   const activeEvent = useActiveEvent();
   const [selectedEventId, setSelectedEventId] = useState<string>(activeEvent.id);
   const [isSendingAcc, setIsSendingAcc] = useState<boolean>(false);
@@ -19,7 +19,10 @@ export default function OperatorPage() {
 
   // Sync selected event if activeEvent changes via URL
   useEffect(() => {
-    setSelectedEventId(activeEvent.id);
+    const timer = setTimeout(() => {
+      setSelectedEventId(activeEvent.id);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [activeEvent.id]);
 
   // Listen to active broadcast channels to confirm Supabase connection
@@ -234,5 +237,19 @@ export default function OperatorPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function OperatorPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#FFFDF5] text-black p-4 flex items-center justify-center font-sans">
+          <div className="w-10 h-10 border-4 border-[#0052FF] border-t-transparent rounded-full animate-spin" />
+        </main>
+      }
+    >
+      <OperatorContent />
+    </Suspense>
   );
 }
