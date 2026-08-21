@@ -148,12 +148,12 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
             {/* Selected Method Display */}
             {paymentMethod === 'qris' ? (
               <div className="bg-[#161F33] p-6 rounded-2xl border border-[#E4D3A9] shadow-lg text-[#FFFBF2] text-center space-y-4">
-                <div className="bg-white p-3 rounded-2xl border border-[#E4D3A9] inline-block mx-auto max-w-[280px]">
+                <div className="bg-white p-3 rounded-2xl border border-[#E4D3A9] inline-block mx-auto max-w-[320px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/qris-karta.webp"
-                    alt="QRIS DANA Karang Taruna FKPGR 02 Rp 7.000"
-                    className="w-full h-auto max-h-[340px] object-contain rounded-lg"
+                    alt="Official QRIS Photobooth NMID ID1026575232032 Rp 7.000"
+                    className="w-full h-auto max-h-[400px] object-contain rounded-lg"
                   />
                 </div>
                 <div className="space-y-1">
@@ -161,7 +161,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                     TARIF SESI: RP 7.000
                   </span>
                   <p className="text-xs text-[#FFFBF2]/80 font-medium">
-                    Scan kode QRIS DANA di atas menggunakan aplikasi m-banking atau e-wallet (DANA, GoPay, OVO, ShopeePay, dll).
+                    Scan kode QRIS Resmi di atas menggunakan aplikasi m-banking atau e-wallet (DANA, GoPay, OVO, ShopeePay, BCA, Mandiri, dll).
                   </p>
                 </div>
               </div>
