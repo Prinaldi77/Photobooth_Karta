@@ -10,6 +10,35 @@ export default function OperatorPage() {
   const [lunasCount, setLunasCount] = useState<number>(0);
   const [connectionStatus, setConnectionStatus] = useState<'CONNECTED' | 'CONNECTING' | 'ERROR'>('CONNECTING');
 
+  // Helper to generate today's date key for daily isolation
+  const getTodayKey = useCallback(() => {
+    const today = new Date();
+    return `karta_lunas_count_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+  }, []);
+
+  // Load persistent count on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const todayKey = getTodayKey();
+      const savedCount = localStorage.getItem(todayKey);
+      if (savedCount !== null) {
+        setLunasCount(parseInt(savedCount, 10) || 0);
+      }
+    }
+  }, [getTodayKey]);
+
+  // Update count both in state and in localStorage
+  const updateLunasCount = useCallback((updater: (prev: number) => number) => {
+    setLunasCount((prev) => {
+      const next = updater(prev);
+      if (typeof window !== 'undefined') {
+        const todayKey = getTodayKey();
+        localStorage.setItem(todayKey, next.toString());
+      }
+      return next;
+    });
+  }, [getTodayKey]);
+
   // Listen to active broadcast channels to confirm Supabase connection
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -56,7 +85,7 @@ export default function OperatorPage() {
         }
       }
 
-      setLunasCount((prev) => prev + 1);
+      updateLunasCount((prev) => prev + 1);
       setAccSuccessMessage('✓ SUKSES! Sinyal Lunas Rp 7.000 dikirim ke Laptop!');
       setTimeout(() => setAccSuccessMessage(null), 4500);
     } catch (err) {
@@ -66,7 +95,7 @@ export default function OperatorPage() {
     } finally {
       setIsSendingAcc(false);
     }
-  }, []);
+  }, [updateLunasCount]);
 
   // Trigger Remote Reset Session back to Welcome Screen
   const handleResetLaptopRemote = useCallback(async () => {
@@ -91,6 +120,15 @@ export default function OperatorPage() {
       console.error('Gagal mengirim sinyal Reset:', err);
     }
   }, []);
+
+  // Reset Kas Counter manually
+  const handleResetDailyKas = useCallback(() => {
+    if (confirm('Apakah Anda yakin ingin mereset angka Kas Hari Ini kembali ke Rp 0?')) {
+      updateLunasCount(() => 0);
+      setAccSuccessMessage('✓ Hitungan Kas Hari Ini di-reset ke Rp 0');
+      setTimeout(() => setAccSuccessMessage(null), 3000);
+    }
+  }, [updateLunasCount]);
 
   return (
     <main className="min-h-screen bg-[#FFFDF5] text-black p-4 sm:p-6 flex flex-col items-center justify-start select-none font-sans">
@@ -164,9 +202,14 @@ export default function OperatorPage() {
 
         {/* Daily Summary & Control Actions */}
         <div className="bg-white border-4 border-black p-5 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-4 text-left">
-          <h3 className="text-sm font-black uppercase text-black border-b-2 border-black pb-2">
-            📊 RINGKASAN KAS HARI INI
-          </h3>
+          <div className="flex items-center justify-between border-b-2 border-black pb-2">
+            <h3 className="text-sm font-black uppercase text-black">
+              📊 RINGKASAN KAS HARI INI
+            </h3>
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-black">
+              PERMANEN (PERSISTENT)
+            </span>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#FFFDF5] p-3.5 rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-center">
@@ -182,13 +225,20 @@ export default function OperatorPage() {
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col gap-2">
             <button
               type="button"
               onClick={handleResetLaptopRemote}
               className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] uppercase cursor-pointer transition-all"
             >
               🔄 RESET LAPTOP KE HALAMAN UTAMA
+            </button>
+            <button
+              type="button"
+              onClick={handleResetDailyKas}
+              className="w-full py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#FF3366] font-bold text-[11px] border border-rose-300 uppercase cursor-pointer transition-all"
+            >
+              🗑️ Reset Hitungan Kas Hari Ini (Manual)
             </button>
           </div>
         </div>
