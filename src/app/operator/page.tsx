@@ -115,23 +115,23 @@ function OperatorContent() {
   }, [currentEventConfig]);
 
   return (
-    <main className="min-h-screen bg-[#FFFDF5] text-black p-4 sm:p-6 flex flex-col items-center justify-start select-none font-sans">
+    <main className="min-h-screen bg-[#FFFDF5] text-[#161F33] p-4 sm:p-6 flex flex-col items-center justify-start select-none font-sans">
       <div className="max-w-md w-full mx-auto space-y-6 pt-2">
         {/* Header Badge */}
-        <div className="bg-white border-4 border-black p-5 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#0052FF] text-white border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+        <div className="bg-white border border-[#E4D3A9] p-5 rounded-3xl shadow-[0_15px_30px_-10px_rgba(22,31,51,0.12)] text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FBF2DF] text-[#161F33] border border-[#E4D3A9]">
             <span>🇲🇨 {currentEventConfig.name}</span>
           </div>
 
           {/* Event Selector Dropdown */}
-          <div className="pt-1">
-            <label className="text-[11px] font-black uppercase text-slate-700 block mb-1">
+          <div className="pt-1 text-left">
+            <label className="text-[11px] font-bold uppercase text-[#161F33]/70 block mb-1">
               Pilih Event Kasir Aktif:
             </label>
             <select
               value={selectedEventId}
               onChange={(e) => setSelectedEventId(e.target.value)}
-              className="w-full bg-[#FFE600] text-black font-black text-xs rounded-xl px-3 py-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:outline-none cursor-pointer uppercase"
+              className="w-full bg-[#FBF2DF] text-[#161F33] font-bold text-xs rounded-xl px-3.5 py-2.5 border border-[#E4D3A9] focus:outline-none cursor-pointer uppercase shadow-xs"
             >
               {Object.values(EVENTS_CONFIG).map((event) => (
                 <option key={event.id} value={event.id}>
@@ -143,8 +143,8 @@ function OperatorContent() {
 
           <div className="flex items-center justify-center gap-2 text-xs font-bold font-mono pt-1">
             <span
-              className={`w-3 h-3 rounded-full border border-black ${
-                connectionStatus === 'CONNECTED' ? 'bg-[#00E676] animate-pulse' : 'bg-[#FF3366]'
+              className={`w-3 h-3 rounded-full border border-black/20 ${
+                connectionStatus === 'CONNECTED' ? 'bg-[#00E676] animate-pulse' : 'bg-[#C8102E]'
               }`}
             />
             <span>Sinyal Realtime: {connectionStatus === 'CONNECTED' ? 'TERHUBUNG ⚡' : 'MENGHUBUNGKAN...'}</span>
@@ -152,37 +152,37 @@ function OperatorContent() {
         </div>
 
         {/* Action Card: ACC Pembayaran */}
-        <div className="bg-[#FFE600] border-4 border-black p-6 rounded-3xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] text-black space-y-5">
+        <div className="bg-[#161F33] border border-[#D9A441] p-6 rounded-3xl shadow-xl text-white space-y-5">
           <div className="flex justify-between items-center">
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-black text-white border border-black">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#C8102E] text-white border border-[#D9A441]">
               📱 REMOTE KASIR PANITIA
             </span>
-            <span className="text-xs font-black bg-white px-3 py-1 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            <span className="text-xs font-bold bg-[#FBF2DF] text-[#161F33] px-3 py-1 rounded-full border border-[#E4D3A9]">
               TARIF: {currentEventConfig.priceText}
             </span>
           </div>
 
           <div className="space-y-1 text-left">
-            <h2 className="text-xl sm:text-2xl font-black uppercase">KONFIRMASI PEMBAYARAN</h2>
-            <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
+            <h2 className="text-xl sm:text-2xl font-black uppercase text-[#F0C878]">KONFIRMASI PEMBAYARAN</h2>
+            <p className="text-xs sm:text-sm font-medium text-white/90 leading-relaxed">
               Tekan tombol hijau di bawah setelah menerima konfirmasi uang tunai atau notifikasi QRIS DANA sebesar{' '}
-              <strong className="underline font-black">{currentEventConfig.priceText}</strong> ({currentEventConfig.name}).
+              <strong className="underline font-bold text-[#F0C878]">{currentEventConfig.priceText}</strong> ({currentEventConfig.name}).
             </p>
           </div>
 
           {/* Big Green ACC Button */}
           <motion.button
-            whileHover={{ scale: 1.02, x: -2, y: -2 }}
-            whileTap={{ scale: 0.96, x: 2, y: 2 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.96 }}
             onClick={handleApprovePaymentRemote}
             disabled={isSendingAcc}
-            className="w-full py-5 rounded-2xl bg-[#00E676] hover:bg-[#00C853] text-black font-black text-xl sm:text-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wide cursor-pointer transition-all flex flex-col items-center justify-center gap-1 disabled:opacity-80 active:shadow-none"
+            className="w-full py-5 rounded-2xl bg-[#00E676] hover:bg-[#00C853] text-black font-black text-xl sm:text-2xl border border-white shadow-lg uppercase tracking-wide cursor-pointer transition-all flex flex-col items-center justify-center gap-1 disabled:opacity-80"
           >
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-white animate-ping border border-black"></span>
+              <span className="w-4 h-4 rounded-full bg-white animate-ping border border-black/30"></span>
               <span>{isSendingAcc ? 'MENGIRIM ACC...' : '✅ KONFIRMASI LUNAS'}</span>
             </div>
-            <span className="text-xs font-black uppercase tracking-widest text-slate-900 bg-white/70 px-3 py-0.5 rounded-full border border-black">
+            <span className="text-xs font-bold uppercase tracking-widest text-black/80 bg-white/80 px-3 py-0.5 rounded-full">
               SEBESAR {currentEventConfig.priceText}
             </span>
           </motion.button>
@@ -193,7 +193,7 @@ function OperatorContent() {
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="p-3 bg-white border-3 border-black rounded-xl text-center text-xs font-black text-black uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                className="p-3 bg-[#FBF2DF] border border-[#D9A441] rounded-xl text-center text-xs font-bold text-[#161F33] uppercase shadow-md"
               >
                 {accSuccessMessage}
               </motion.div>
@@ -202,19 +202,19 @@ function OperatorContent() {
         </div>
 
         {/* Daily Summary & Control Actions */}
-        <div className="bg-white border-4 border-black p-5 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-4 text-left">
-          <h3 className="text-sm font-black uppercase text-black border-b-2 border-black pb-2">
+        <div className="bg-white border border-[#E4D3A9] p-5 rounded-3xl shadow-[0_15px_30px_-10px_rgba(22,31,51,0.12)] space-y-4 text-left">
+          <h3 className="text-sm font-bold uppercase text-[#161F33] border-b border-[#E4D3A9] pb-2">
             📊 RINGKASAN KAS ({currentEventConfig.name})
           </h3>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#FFFDF5] p-3.5 rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-center">
-              <span className="text-[11px] font-bold text-slate-600 block uppercase">TOTAL FOTO LUNAS</span>
-              <span className="text-2xl font-black text-[#0052FF]">{lunasCount} Sesi</span>
+            <div className="bg-[#FBF2DF] p-3.5 rounded-2xl border border-[#E4D3A9] text-center">
+              <span className="text-[11px] font-bold text-[#161F33]/70 block uppercase">TOTAL FOTO LUNAS</span>
+              <span className="text-2xl font-black text-[#C8102E]">{lunasCount} Sesi</span>
             </div>
 
-            <div className="bg-[#FFFDF5] p-3.5 rounded-2xl border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-center">
-              <span className="text-[11px] font-bold text-slate-600 block uppercase">ESTIMASI KAS</span>
+            <div className="bg-[#FBF2DF] p-3.5 rounded-2xl border border-[#E4D3A9] text-center">
+              <span className="text-[11px] font-bold text-[#161F33]/70 block uppercase">ESTIMASI KAS</span>
               <span className="text-2xl font-black text-[#00E676]">
                 Rp {(lunasCount * currentEventConfig.priceAmount).toLocaleString('id-ID')}
               </span>
@@ -225,14 +225,14 @@ function OperatorContent() {
             <button
               type="button"
               onClick={handleResetLaptopRemote}
-              className="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] uppercase cursor-pointer transition-all"
+              className="w-full py-3 rounded-xl bg-[#FBF2DF] hover:bg-[#E4D3A9]/40 text-[#161F33] font-bold text-xs border border-[#E4D3A9] uppercase cursor-pointer transition-all shadow-xs"
             >
               🔄 RESET LAPTOP KE HALAMAN UTAMA
             </button>
           </div>
         </div>
 
-        <div className="text-center text-[11px] font-bold text-slate-500 pt-2">
+        <div className="text-center text-[11px] font-bold text-[#161F33]/50 pt-2">
           {currentEventConfig.name} Photobooth System v1.0
         </div>
       </div>
@@ -245,7 +245,7 @@ export default function OperatorPage() {
     <Suspense
       fallback={
         <main className="min-h-screen bg-[#FFFDF5] text-black p-4 flex items-center justify-center font-sans">
-          <div className="w-10 h-10 border-4 border-[#0052FF] border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-3 border-[#C8102E] border-t-transparent rounded-full animate-spin" />
         </main>
       }
     >

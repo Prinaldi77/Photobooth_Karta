@@ -70,23 +70,23 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
       className="flex flex-col items-center justify-center min-h-[85vh] w-full max-w-5xl mx-auto px-4 text-center select-none py-6 font-sans"
     >
-      <div className="bg-[#FFFDF5] border-4 border-black p-6 sm:p-10 rounded-3xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-8 w-full text-black">
+      <div className="bg-[#FFFDF5] border border-[#E4D3A9] p-6 sm:p-10 rounded-3xl shadow-[0_25px_50px_-12px_rgba(22,31,51,0.15)] space-y-8 w-full text-[#161F33]">
         {/* Header */}
         <div className="space-y-3 flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#0052FF] text-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FBF2DF] text-[#161F33] border border-[#E4D3A9] shadow-xs">
             <span>5. HALAMAN PEMBAYARAN SESI</span>
             {sessionCode && (
-              <span className="bg-[#FFE600] text-black px-2 py-0.5 rounded font-mono border border-black">
+              <span className="bg-[#C8102E] text-[#FFFBF2] px-2 py-0.5 rounded font-mono border border-[#D9A441]">
                 #{sessionCode}
               </span>
             )}
           </div>
-          <h2 className="text-3xl sm:text-5xl font-black text-black uppercase tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-black text-[#161F33] uppercase tracking-tight">
             LANJUTKAN PEMBAYARAN
           </h2>
-          <p className="text-slate-800 text-sm sm:text-base font-bold">
+          <p className="text-[#161F33]/80 text-sm sm:text-base font-bold">
             Pilih metode pembayaran sebesar{' '}
-            <span className="bg-[#FFE600] px-2.5 py-0.5 rounded-md border border-black font-black text-black">
+            <span className="bg-[#C8102E] text-[#FFFBF2] px-2.5 py-0.5 rounded-md border border-[#D9A441] font-black">
               {priceText}
             </span>{' '}
             untuk membuka QR Download HP.
@@ -96,7 +96,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
         {/* Content Grid: Photo Preview with Watermark + Payment Method Selector */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Photo Preview Card with Watermark (5 cols) */}
-          <div className="lg:col-span-5 aspect-[2/3] max-h-[460px] bg-slate-950 rounded-2xl overflow-hidden border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] relative flex items-center justify-center p-2 mx-auto w-full">
+          <div className="lg:col-span-5 aspect-[2/3] max-h-[460px] bg-slate-950 rounded-2xl overflow-hidden border-2 border-[#E4D3A9] shadow-[0_15px_30px_-10px_rgba(22,31,51,0.2)] relative flex items-center justify-center p-2 mx-auto w-full">
             {imageSrc ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -106,8 +106,8 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                   className="w-auto h-full max-h-[440px] object-contain rounded-xl"
                 />
                 {/* Watermark Overlay */}
-                <div className="absolute inset-0 bg-black/20 pointer-events-none flex items-center justify-center">
-                  <span className="text-3xl font-black text-white/80 bg-black/60 px-6 py-2 rounded-2xl border-2 border-white tracking-widest rotate-[-12deg]">
+                <div className="absolute inset-0 bg-[#161F33]/30 pointer-events-none flex items-center justify-center">
+                  <span className="text-3xl font-black text-[#FFFBF2]/90 bg-[#161F33]/75 px-6 py-2 rounded-2xl border border-[#D9A441] tracking-widest rotate-[-12deg] shadow-lg">
                     PREVIEW FOTO
                   </span>
                 </div>
@@ -124,10 +124,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setPaymentMethod('qris')}
-                className={`p-4 rounded-2xl border-3 border-black text-center font-black transition-all cursor-pointer ${
+                className={`p-4 rounded-2xl border text-center font-bold transition-all cursor-pointer ${
                   paymentMethod === 'qris'
-                    ? 'bg-[#FFE600] text-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] scale-[1.02]'
-                    : 'bg-white text-slate-700 hover:bg-slate-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                    ? 'bg-[#C8102E] text-[#FFFBF2] border-[#D9A441] shadow-md scale-[1.02]'
+                    : 'bg-[#FBF2DF] text-[#161F33] border-[#E4D3A9] hover:bg-[#E4D3A9]/40 shadow-xs'
                 }`}
               >
                 <div className="text-2xl mb-1">📱 QRIS DIGITAL</div>
@@ -137,10 +137,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setPaymentMethod('cash')}
-                className={`p-4 rounded-2xl border-3 border-black text-center font-black transition-all cursor-pointer ${
+                className={`p-4 rounded-2xl border text-center font-bold transition-all cursor-pointer ${
                   paymentMethod === 'cash'
-                    ? 'bg-[#00E676] text-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] scale-[1.02]'
-                    : 'bg-white text-slate-700 hover:bg-slate-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                    ? 'bg-[#C8102E] text-[#FFFBF2] border-[#D9A441] shadow-md scale-[1.02]'
+                    : 'bg-[#FBF2DF] text-[#161F33] border-[#E4D3A9] hover:bg-[#E4D3A9]/40 shadow-xs'
                 }`}
               >
                 <div className="text-2xl mb-1">💵 CASH TUNAI</div>
@@ -150,8 +150,8 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
             {/* Selected Method Display (WebP Optimized) */}
             {paymentMethod === 'qris' ? (
-              <div className="bg-[#0052FF] p-6 rounded-2xl border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-white text-center space-y-4">
-                <div className="bg-white p-3.5 rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] inline-block mx-auto max-w-[280px]">
+              <div className="bg-[#161F33] p-6 rounded-2xl border border-[#D9A441] shadow-lg text-white text-center space-y-4">
+                <div className="bg-white p-3.5 rounded-2xl border border-[#D9A441] shadow-md inline-block mx-auto max-w-[280px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={qrisSrc}
@@ -160,22 +160,22 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <span className="text-xl font-black block uppercase text-[#FFE600]">
+                  <span className="text-xl font-black block uppercase text-[#F0C878]">
                     TARIF SESI: {priceText}
                   </span>
-                  <p className="text-xs font-bold text-white/90">
+                  <p className="text-xs font-medium text-[#FFFBF2]/90">
                     Scan kode QRIS di atas menggunakan aplikasi m-banking atau e-wallet (DANA, GoPay, OVO, ShopeePay, dll).
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="bg-[#00E676] p-8 rounded-2xl border-3 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-black text-center space-y-4">
-                <div className="w-16 h-16 bg-white border-3 border-black rounded-full flex items-center justify-center mx-auto text-3xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <div className="bg-[#FBF2DF] p-8 rounded-2xl border border-[#E4D3A9] shadow-md text-[#161F33] text-center space-y-4">
+                <div className="w-16 h-16 bg-[#C8102E] text-white border border-[#D9A441] rounded-full flex items-center justify-center mx-auto text-3xl shadow-md">
                   💵
                 </div>
                 <div className="space-y-2">
-                  <span className="text-2xl font-black block uppercase">BAYAR TUNAI {priceText}</span>
-                  <p className="text-sm font-bold text-slate-900 leading-relaxed">
+                  <span className="text-2xl font-black block uppercase text-[#C8102E]">BAYAR TUNAI {priceText}</span>
+                  <p className="text-sm font-bold text-[#161F33] leading-relaxed">
                     Silakan serahkan uang tunai sebesar <strong className="underline">{priceText}</strong> kepada petugas {eventName} di sebelah booth photobooth.
                   </p>
                 </div>
@@ -183,13 +183,13 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
             )}
 
             {/* Waiting for Operator Status Box (No Bypass Button on Laptop) */}
-            <div className="bg-white p-5 rounded-2xl border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4">
-              <div className="w-4 h-4 rounded-full bg-[#FFE600] animate-ping border border-black flex-shrink-0"></div>
+            <div className="bg-[#FBF2DF] p-5 rounded-2xl border border-[#E4D3A9] shadow-xs flex items-center gap-4">
+              <div className="w-4 h-4 rounded-full bg-[#C8102E] animate-ping border border-[#D9A441] flex-shrink-0"></div>
               <div className="text-left">
-                <span className="text-xs sm:text-sm font-black text-black block uppercase">
+                <span className="text-xs sm:text-sm font-black text-[#161F33] block uppercase">
                   {isVerifying ? '✓ VERIFIKASI PEMBAYARAN LUNAS...' : '⏳ MENUNGGU KONFIRMASI OPERATOR HP'}
                 </span>
-                <span className="text-[11px] sm:text-xs font-bold text-slate-600">
+                <span className="text-[11px] sm:text-xs font-bold text-[#161F33]/70">
                   Panitia {eventName} akan menekan konfirmasi dari HP Operator setelah pembayaran diterima.
                 </span>
               </div>
@@ -200,7 +200,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               <button
                 type="button"
                 onClick={onBackToRetake}
-                className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-black font-black text-xs border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] uppercase cursor-pointer transition-all"
+                className="px-6 py-2.5 rounded-full bg-[#FBF2DF] hover:bg-[#E4D3A9]/40 text-[#161F33] font-bold text-xs border border-[#E4D3A9] shadow-xs uppercase cursor-pointer transition-all"
               >
                 ← FOTO ULANG
               </button>
