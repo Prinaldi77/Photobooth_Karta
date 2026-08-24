@@ -12,6 +12,7 @@ import { WelcomeScreen } from './WelcomeScreen';
 import { CameraPermissionScreen } from './CameraPermissionScreen';
 import { CameraPreviewScreen } from './CameraPreviewScreen';
 import { CaptureReviewScreen } from './CaptureReviewScreen';
+import { PaymentScreen } from './PaymentScreen';
 import { ResultSuccessScreen } from './ResultSuccessScreen';
 import { BuntingGarland } from '@/components/ui/BuntingGarland';
 
@@ -94,7 +95,12 @@ export const PhotoboothContainer: React.FC = () => {
     setCurrentState('IDLE');
   }, []);
 
-  // Step 1: Start Camera -> Create session & initialize camera stream
+  // Step 1: User clicks "Mulai Photobooth" on Welcome Screen -> Advance to PAYMENT Screen first!
+  const handleGoToPayment = useCallback(() => {
+    setCurrentState('PAYMENT');
+  }, []);
+
+  // Step 2: Payment ACC Received -> Create Session & Start Camera
   const handleStartCamera = useCallback(async () => {
     setCurrentState('REQUESTING_PERMISSION');
     setErrorMessage(undefined);
@@ -149,7 +155,7 @@ export const PhotoboothContainer: React.FC = () => {
       channel
         .on('broadcast', { event: 'payment_approved' }, () => {
           console.log('[PhotoboothContainer] Sinyal Remote ACC diterima dari Operator HP! Membuka kamera...');
-          if (currentState === 'IDLE') {
+          if (currentState === 'IDLE' || currentState === 'PAYMENT') {
             handleStartCamera();
           }
         })
@@ -412,7 +418,7 @@ export const PhotoboothContainer: React.FC = () => {
   return (
     <main className="min-h-screen bg-[#FFFBF2] bg-batik-dots text-[#161F33] flex flex-col items-center justify-start select-none font-sans">
       {/* State Machine UI Flow Router */}
-      {currentState === 'IDLE' && <WelcomeScreen eventConfig={activeEvent} onStart={handleStartCamera} />}
+      {currentState === 'IDLE' && <WelcomeScreen eventConfig={activeEvent} onStart={handleGoToPayment} />}
 
       {currentState !== 'IDLE' && (
         <div className="w-full flex flex-col items-center">
@@ -435,6 +441,18 @@ export const PhotoboothContainer: React.FC = () => {
           )}
 
           <div className="p-4 sm:p-8 w-full max-w-5xl">
+            {/* Step 1: PAYMENT Screen (Shown BEFORE Camera Opens) */}
+            {currentState === 'PAYMENT' && (
+              <PaymentScreen
+                eventConfig={activeEvent}
+                imageSrc={null}
+                sessionCode={currentSession?.session_code}
+                sessionId={currentSession?.id}
+                onPaymentSuccess={handleStartCamera}
+                onBackToRetake={handleResetSession}
+              />
+            )}
+
             {/* 1-Click Loading State */}
             {currentState === 'REQUESTING_PERMISSION' && (
               <div className="bg-white border border-[#E4D3A9] p-10 rounded-3xl shadow-xl flex flex-col items-center justify-center space-y-6 max-w-md mx-auto w-full text-center text-[#161F33]">
@@ -442,7 +460,7 @@ export const PhotoboothContainer: React.FC = () => {
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold uppercase">Mengakses Kamera...</h3>
                   <p className="text-[#161F33]/70 text-sm font-semibold">
-                    Memulai stream webcam dan menyiapkan sesi photobooth {activeEvent.name}.
+                    Pembayaran Lunas! Memulai stream webcam dan sesi foto {activeEvent.name}.
                   </p>
                 </div>
               </div>
