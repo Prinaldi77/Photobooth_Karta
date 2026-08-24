@@ -12,9 +12,10 @@ import { WelcomeScreen } from './WelcomeScreen';
 import { CameraPermissionScreen } from './CameraPermissionScreen';
 import { CameraPreviewScreen } from './CameraPreviewScreen';
 import { CaptureReviewScreen } from './CaptureReviewScreen';
-import { PaymentScreen } from './PaymentScreen';
 import { ResultSuccessScreen } from './ResultSuccessScreen';
 import { BuntingGarland } from '@/components/ui/BuntingGarland';
+
+const TOTAL_SESSION_SECONDS = 300; // 5 Minutes Session Timeout Limit (300 Seconds)
 
 export const PhotoboothContainer: React.FC = () => {
   const activeEvent = useActiveEvent();
@@ -29,6 +30,9 @@ export const PhotoboothContainer: React.FC = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | undefined>();
   const [selectedFrame, setSelectedFrame] = useState<FrameTemplate>(activeEvent.frames[0]);
   const [isProcessingImage, setIsProcessingImage] = useState<boolean>(false);
+
+  // 5-Minute Session Timer State
+  const [sessionTimerSeconds, setSessionTimerSeconds] = useState<number>(TOTAL_SESSION_SECONDS);
 
   // Sync selected frame when activeEvent changes
   useEffect(() => {
@@ -79,6 +83,7 @@ export const PhotoboothContainer: React.FC = () => {
     setRawPhotoBlobs([]);
     setCurrentPoseIndex(1);
     setCurrentPosePreviewUrl(null);
+    setSessionTimerSeconds(TOTAL_SESSION_SECONDS);
     setProcessedResult((prev) => {
       revokeProcessedImageUrls(prev);
       return null;
@@ -89,47 +94,14 @@ export const PhotoboothContainer: React.FC = () => {
     setCurrentState('IDLE');
   }, []);
 
-  // Top-level Supabase Realtime Broadcast listener for Remote ACC and Remote Reset from Operator HP
-  useEffect(() => {
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-
-    const channelNames = [
-      'session_payment_default',
-      `session_payment_${activeEvent.id}_default`,
-      currentSession?.session_code ? `session_payment_${currentSession.session_code}` : null,
-      currentSession?.id ? `session_payment_${currentSession.id}` : null,
-    ].filter(Boolean) as string[];
-
-    const channels = channelNames.map((name) => {
-      const channel = supabase.channel(name);
-
-      channel
-        .on('broadcast', { event: 'payment_approved' }, () => {
-          console.log('[PhotoboothContainer] Sinyal Remote ACC diterima! Pindah ke SUCCESS...');
-          setCurrentState('SUCCESS');
-        })
-        .on('broadcast', { event: 'reset_session' }, () => {
-          console.log('[PhotoboothContainer] Sinyal Remote Reset diterima! Kembali ke IDLE...');
-          handleResetSession();
-        })
-        .subscribe();
-
-      return channel;
-    });
-
-    return () => {
-      channels.forEach((ch) => supabase.removeChannel(ch));
-    };
-  }, [currentSession, handleResetSession, activeEvent.id]);
-
-  // Step 1: 1-Click Instant Camera Start -> Create session & Start Camera immediately
+  // Step 1: Start Camera -> Create session & initialize camera stream
   const handleStartCamera = useCallback(async () => {
     setCurrentState('REQUESTING_PERMISSION');
     setErrorMessage(undefined);
     setCurrentPoseIndex(1);
     setCurrentPosePreviewUrl(null);
     setRawPhotoBlobs([]);
+    setSessionTimerSeconds(TOTAL_SESSION_SECONDS);
 
     try {
       const sessionRes = await fetch('/api/sessions', {
@@ -159,6 +131,158 @@ export const PhotoboothContainer: React.FC = () => {
     }
   }, [selectedDeviceId, activeEvent.id]);
 
+  // Top-level Supabase Realtime Listener for HP Operator Signals (ACC Lunas & Remote Reset)
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+
+    const channelNames = [
+      'session_payment_default',
+      `session_payment_${activeEvent.id}_default`,
+      currentSession?.session_code ? `session_payment_${currentSession.session_code}` : null,
+      currentSession?.id ? `session_payment_${currentSession.id}` : null,
+    ].filter(Boolean) as string[];
+
+    const channels = channelNames.map((name) => {
+      const channel = supabase.channel(name);
+
+      channel
+        .on('broadcast', { event: 'payment_approved' }, () => {
+          console.log('[PhotoboothContainer] Sinyal Remote ACC diterima dari Operator HP! Membuka kamera...');
+          if (currentState === 'IDLE') {
+            handleStartCamera();
+          }
+        })
+        .on('broadcast', { event: 'reset_session' }, () => {
+          console.log('[PhotoboothContainer] Sinyal Remote Reset diterima! Kembali ke Halaman Utama...');
+          handleResetSession();
+        })
+        .subscribe();
+
+      return channel;
+    });
+
+    return () => {
+      channels.forEach((ch) => supabase.removeChannel(ch));
+    };
+  }, [currentState, currentSession, handleResetSession, handleStartCamera, activeEvent.id]);
+
+  // 5-Minute Session Countdown Timer Interval (Active during READY, COUNTDOWN, REVIEW)
+  useEffect(() => {
+    if (currentState !== 'READY' && currentState !== 'COUNTDOWN' && currentState !== 'REVIEW') {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setSessionTimerSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [currentState]);
+
+  // Process captured photos with selected frame template
+  const processCapturedPhotos = useCallback(
+    async (blobs: Blob[], frame: FrameTemplate) => {
+      setIsProcessingImage(true);
+      try {
+        const result = await compositePhotoWithFrame(blobs, frame);
+        setProcessedResult((prev) => {
+          revokeProcessedImageUrls(prev);
+          return result;
+        });
+        setCurrentState('REVIEW');
+      } catch (err: unknown) {
+        setErrorMessage(err instanceof Error ? err.message : 'Gagal mengomposisikan foto dengan frame.');
+        setCurrentState('PROCESSING_ERROR');
+      } finally {
+        setIsProcessingImage(false);
+      }
+    },
+    []
+  );
+
+  // Upload photo to backend API (POST /api/photos/upload) and show SUCCESS result screen
+  const handleUploadPhoto = useCallback(async () => {
+    if (!processedResult || !currentSession) {
+      setErrorMessage('Sesi atau foto belum siap untuk diunggah.');
+      setCurrentState('UPLOAD_ERROR');
+      return;
+    }
+
+    setCurrentState('UPLOADING');
+    setErrorMessage(undefined);
+
+    try {
+      const formData = new FormData();
+      formData.append(
+        'master',
+        processedResult.masterBlob,
+        `master-${currentSession.session_code}.jpg`
+      );
+      formData.append(
+        'preview',
+        processedResult.previewBlob,
+        `preview-${currentSession.session_code}.jpg`
+      );
+      formData.append('session_id', currentSession.id);
+      formData.append('session_code', currentSession.session_code);
+      formData.append('event_id', activeEvent.id);
+      if (selectedFrame?.id) {
+        formData.append('frame_id', selectedFrame.id);
+      }
+
+      const res = await fetch('/api/photos/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        if (res.status === 413) {
+          throw new Error('Ukuran foto terlalu besar untuk server. Silakan coba lagi.');
+        }
+        const textMsg = await res.text();
+        throw new Error(textMsg || `Gagal mengunggah foto (HTTP ${res.status}).`);
+      }
+
+      const json = await res.json();
+
+      if (!json.success) {
+        throw new Error(json.error?.message || 'Gagal mengunggah foto ke server backend.');
+      }
+
+      setUploadedPhoto(json.data);
+      // Advance to SUCCESS Result Screen with QR Code Download
+      setCurrentState('SUCCESS');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal mengunggah foto.';
+      setErrorMessage(msg);
+      setCurrentState('UPLOAD_ERROR');
+    }
+  }, [processedResult, currentSession, selectedFrame, activeEvent.id]);
+
+  // Session Timer Expired Handler (When 5-minute timer hits 0:00)
+  useEffect(() => {
+    if (sessionTimerSeconds === 0) {
+      console.log('[Session Timer] Waktu 5 menit sesi foto habis!');
+
+      if (rawPhotoBlobs.length > 0) {
+        // If consumer has taken at least 1 pose, auto-composite and auto-upload!
+        processCapturedPhotos(rawPhotoBlobs, selectedFrame).then(() => {
+          handleUploadPhoto();
+        });
+      } else {
+        // If consumer took 0 photos, auto-reset back to Welcome Screen
+        handleResetSession();
+      }
+    }
+  }, [sessionTimerSeconds, rawPhotoBlobs, selectedFrame, processCapturedPhotos, handleUploadPhoto, handleResetSession]);
+
   // Connect video element & enumerate devices once ready
   useEffect(() => {
     if (currentState === 'READY' && videoRef.current && cameraAdapterRef.current) {
@@ -184,27 +308,6 @@ export const PhotoboothContainer: React.FC = () => {
       cameraAdapterRef.current.setDeviceId(deviceId);
     }
   }, []);
-
-  // Process 3 photo blobs with selected frame template
-  const processCapturedPhotos = useCallback(
-    async (blobs: Blob[], frame: FrameTemplate) => {
-      setIsProcessingImage(true);
-      try {
-        const result = await compositePhotoWithFrame(blobs, frame);
-        setProcessedResult((prev) => {
-          revokeProcessedImageUrls(prev);
-          return result;
-        });
-        setCurrentState('REVIEW');
-      } catch (err: unknown) {
-        setErrorMessage(err instanceof Error ? err.message : 'Gagal mengomposisikan foto dengan frame.');
-        setCurrentState('PROCESSING_ERROR');
-      } finally {
-        setIsProcessingImage(false);
-      }
-    },
-    []
-  );
 
   // Trigger 3-2-1 Countdown for current Pose
   const handleStartSinglePoseCountdown = useCallback(() => {
@@ -299,69 +402,12 @@ export const PhotoboothContainer: React.FC = () => {
     setCurrentState('READY');
   };
 
-  // Upload photo to backend API (POST /api/photos/upload) then navigate to PAYMENT screen
-  const handleUploadPhoto = useCallback(async () => {
-    if (!processedResult || !currentSession) {
-      setErrorMessage('Sesi atau foto belum siap untuk diunggah.');
-      setCurrentState('UPLOAD_ERROR');
-      return;
-    }
-
-    setCurrentState('UPLOADING');
-    setErrorMessage(undefined);
-
-    try {
-      const formData = new FormData();
-      formData.append(
-        'master',
-        processedResult.masterBlob,
-        `master-${currentSession.session_code}.jpg`
-      );
-      formData.append(
-        'preview',
-        processedResult.previewBlob,
-        `preview-${currentSession.session_code}.jpg`
-      );
-      formData.append('session_id', currentSession.id);
-      formData.append('session_code', currentSession.session_code);
-      formData.append('event_id', activeEvent.id);
-      if (selectedFrame?.id) {
-        formData.append('frame_id', selectedFrame.id);
-      }
-
-      const res = await fetch('/api/photos/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        if (res.status === 413) {
-          throw new Error('Ukuran foto terlalu besar untuk server. Silakan coba lagi.');
-        }
-        const textMsg = await res.text();
-        throw new Error(textMsg || `Gagal mengunggah foto (HTTP ${res.status}).`);
-      }
-
-      const json = await res.json();
-
-      if (!json.success) {
-        throw new Error(json.error?.message || 'Gagal mengunggah foto ke server backend.');
-      }
-
-      setUploadedPhoto(json.data);
-      // Advance to PAYMENT Screen (Step 4 & 5)
-      setCurrentState('PAYMENT');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal mengunggah foto.';
-      setErrorMessage(msg);
-      setCurrentState('UPLOAD_ERROR');
-    }
-  }, [processedResult, currentSession, selectedFrame, activeEvent.id]);
-
-  // Payment Confirmation Success Callback -> Advance to SUCCESS
-  const handlePaymentApproved = useCallback(() => {
-    setCurrentState('SUCCESS');
-  }, []);
+  // Format timer seconds into mm:ss
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <main className="min-h-screen bg-[#FFFBF2] bg-batik-dots text-[#161F33] flex flex-col items-center justify-start select-none font-sans">
@@ -371,6 +417,23 @@ export const PhotoboothContainer: React.FC = () => {
       {currentState !== 'IDLE' && (
         <div className="w-full flex flex-col items-center">
           <BuntingGarland />
+
+          {/* 5-Minute Session Countdown Timer Badge Header */}
+          {(currentState === 'READY' || currentState === 'COUNTDOWN' || currentState === 'REVIEW') && (
+            <div className="pt-3 pb-1 z-30">
+              <div
+                className={`px-5 py-2 rounded-full font-mono-space font-bold text-xs sm:text-sm border shadow-md flex items-center gap-2 transition-all ${
+                  sessionTimerSeconds <= 60
+                    ? 'bg-[#C8102E] text-white border-white animate-pulse'
+                    : 'bg-[#161F33] text-[#F0C878] border-[#D9A441]'
+                }`}
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-[#00E676] animate-ping"></span>
+                <span>⏱️ SISA WAKTU SESI: {formatTimer(sessionTimerSeconds)}</span>
+              </div>
+            </div>
+          )}
+
           <div className="p-4 sm:p-8 w-full max-w-5xl">
             {/* 1-Click Loading State */}
             {currentState === 'REQUESTING_PERMISSION' && (
@@ -434,7 +497,7 @@ export const PhotoboothContainer: React.FC = () => {
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold uppercase">Mengunggah Foto...</h3>
                   <p className="text-[#161F33]/70 text-sm font-semibold">
-                    Foto master 3 pose sedang dikirim, menyiapkan Halaman Pembayaran.
+                    Foto master 3 pose sedang dikirim, menyiapkan QR Code Download.
                   </p>
                 </div>
               </div>
@@ -469,19 +532,7 @@ export const PhotoboothContainer: React.FC = () => {
               </div>
             )}
 
-            {/* Step 5: PAYMENT Screen */}
-            {currentState === 'PAYMENT' && (
-              <PaymentScreen
-                eventConfig={activeEvent}
-                imageSrc={processedResult?.previewUrl || null}
-                sessionCode={currentSession?.session_code}
-                sessionId={currentSession?.id}
-                onPaymentSuccess={handlePaymentApproved}
-                onBackToRetake={handleRetakeAll}
-              />
-            )}
-
-            {/* Step 6: SUCCESS Screen (QR Code Download HP) */}
+            {/* SUCCESS Screen (QR Code Download HP) */}
             {currentState === 'SUCCESS' && (
               <ResultSuccessScreen
                 eventConfig={activeEvent}
