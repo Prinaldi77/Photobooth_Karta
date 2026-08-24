@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabase';
 import { useActiveEvent } from '@/hooks/useActiveEvent';
 import { EVENTS_CONFIG, EventConfig } from '@/config/events';
@@ -14,6 +15,8 @@ function OperatorContent() {
   const [lunasCount, setLunasCount] = useState<number>(0);
   const [connectionStatus, setConnectionStatus] = useState<'CONNECTED' | 'CONNECTING' | 'ERROR'>('CONNECTING');
 
+  const activeChannelsRef = useRef<Record<string, RealtimeChannel>>({});
+
   // Active event object resolved from selection
   const currentEventConfig: EventConfig = EVENTS_CONFIG[selectedEventId] || activeEvent;
 
@@ -25,7 +28,7 @@ function OperatorContent() {
     return () => clearTimeout(timer);
   }, [activeEvent.id]);
 
-  // Listen to active broadcast channels to confirm Supabase connection
+  // Maintain persistent, pre-subscribed Realtime Channels for 0ms broadcast delivery!
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) {
@@ -33,19 +36,72 @@ function OperatorContent() {
       return () => clearTimeout(timer);
     }
 
-    const testChannel = supabase.channel(`operator_kasir_status_${currentEventConfig.id}`);
-    testChannel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        setConnectionStatus('CONNECTED');
-      } else {
-        setConnectionStatus('CONNECTING');
-      }
+    const channelNames = [
+      'session_payment_default',
+      `session_payment_${currentEventConfig.id}_default`,
+    ];
+
+    const newChannels: Record<string, RealtimeChannel> = {};
+
+    channelNames.forEach((name) => {
+      const channel = supabase.channel(name);
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setConnectionStatus('CONNECTED');
+        }
+      });
+      newChannels[name] = channel;
     });
 
+    activeChannelsRef.current = newChannels;
+
     return () => {
-      supabase.removeChannel(testChannel);
+      Object.values(newChannels).forEach((ch) => {
+        supabase.removeChannel(ch);
+      });
+      activeChannelsRef.current = {};
     };
   }, [currentEventConfig.id]);
+
+  // Helper to reliably broadcast signal over both persistent and fallback channels
+  const broadcastSignalToLaptop = useCallback(
+    async (eventName: 'payment_approved' | 'reset_session', payloadData: Record<string, unknown>) => {
+      const supabase = getSupabaseClient();
+      if (!supabase) return;
+
+      const channelNames = [
+        'session_payment_default',
+        `session_payment_${currentEventConfig.id}_default`,
+      ];
+
+      for (const name of channelNames) {
+        let ch = activeChannelsRef.current[name];
+
+        if (!ch) {
+          ch = supabase.channel(name);
+          activeChannelsRef.current[name] = ch;
+        }
+
+        // Wait for SUBSCRIBED status if not already connected
+        if (ch.state !== 'joined') {
+          await new Promise<void>((resolve) => {
+            ch.subscribe((status) => {
+              if (status === 'SUBSCRIBED') resolve();
+            });
+            setTimeout(resolve, 800); // Fallback timeout
+          });
+        }
+
+        // Send broadcast payload
+        await ch.send({
+          type: 'broadcast',
+          event: eventName,
+          payload: payloadData,
+        });
+      }
+    },
+    [currentEventConfig.id]
+  );
 
   // Trigger Remote Payment ACC Broadcast to Laptop from Operator Phone
   const handleApprovePaymentRemote = useCallback(async () => {
@@ -53,24 +109,10 @@ function OperatorContent() {
     setAccSuccessMessage(null);
 
     try {
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        // Broadcast to both global and event-specific session channels
-        const channelNames = [
-          'session_payment_default',
-          `session_payment_${currentEventConfig.id}_default`,
-        ];
-
-        for (const name of channelNames) {
-          const ch = supabase.channel(name);
-          await ch.subscribe();
-          await ch.send({
-            type: 'broadcast',
-            event: 'payment_approved',
-            payload: { timestamp: Date.now(), event_id: currentEventConfig.id },
-          });
-        }
-      }
+      await broadcastSignalToLaptop('payment_approved', {
+        timestamp: Date.now(),
+        event_id: currentEventConfig.id,
+      });
 
       setLunasCount((prev) => prev + 1);
       setAccSuccessMessage(`✓ SUKSES! Sinyal Lunas ${currentEventConfig.priceText} dikirim ke Laptop (${currentEventConfig.name})!`);
@@ -82,7 +124,7 @@ function OperatorContent() {
     } finally {
       setIsSendingAcc(false);
     }
-  }, [currentEventConfig]);
+  }, [currentEventConfig, broadcastSignalToLaptop]);
 
   // Trigger Remote Reset Session back to Welcome Screen
   const handleResetLaptopRemote = useCallback(async () => {
@@ -91,28 +133,19 @@ function OperatorContent() {
     }
 
     try {
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        const channelNames = [
-          'session_payment_default',
-          `session_payment_${currentEventConfig.id}_default`,
-        ];
-        for (const name of channelNames) {
-          const ch = supabase.channel(name);
-          await ch.subscribe();
-          await ch.send({
-            type: 'broadcast',
-            event: 'reset_session',
-            payload: { timestamp: Date.now() },
-          });
-        }
-      }
-      setAccSuccessMessage('✓ Sinyal Reset dikirim ke Laptop!');
+      await broadcastSignalToLaptop('reset_session', {
+        timestamp: Date.now(),
+        event_id: currentEventConfig.id,
+      });
+
+      setAccSuccessMessage('✓ SUKSES! Sinyal Reset dikirim ke Laptop!');
       setTimeout(() => setAccSuccessMessage(null), 3000);
     } catch (err) {
       console.error('Gagal mengirim sinyal Reset:', err);
+      setAccSuccessMessage('❌ Gagal me-reset laptop. Coba tekan lagi.');
+      setTimeout(() => setAccSuccessMessage(null), 3000);
     }
-  }, [currentEventConfig]);
+  }, [currentEventConfig, broadcastSignalToLaptop]);
 
   return (
     <main className="min-h-screen bg-[#FFFDF5] text-[#161F33] p-4 sm:p-6 flex flex-col items-center justify-start select-none font-sans">
