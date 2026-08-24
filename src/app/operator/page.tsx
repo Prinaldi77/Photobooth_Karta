@@ -5,14 +5,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabase';
 import { useActiveEvent } from '@/hooks/useActiveEvent';
-import { EVENTS_CONFIG, EventConfig } from '@/config/events';
+import { EVENTS_CONFIG, EventConfig, PricingPackage } from '@/config/events';
 
 function OperatorContent() {
   const activeEvent = useActiveEvent();
   const [selectedEventId, setSelectedEventId] = useState<string>(activeEvent.id);
   const [isSendingAcc, setIsSendingAcc] = useState<boolean>(false);
   const [accSuccessMessage, setAccSuccessMessage] = useState<string | null>(null);
-  const [lunasCount, setLunasCount] = useState<number>(0);
+
+  // Dynamic Cash Counters for Rp 5.000 (Duo 1-2 Persons) & Rp 7.000 (Group 3-5 Persons)
+  const [duoCount, setDuoCount] = useState<number>(0);
+  const [groupCount, setGroupCount] = useState<number>(0);
   const [connectionStatus, setConnectionStatus] = useState<'CONNECTED' | 'CONNECTING' | 'ERROR'>('CONNECTING');
 
   const activeChannelsRef = useRef<Record<string, RealtimeChannel>>({});
@@ -103,28 +106,38 @@ function OperatorContent() {
     [currentEventConfig.id]
   );
 
-  // Trigger Remote Payment ACC Broadcast to Laptop from Operator Phone
-  const handleApprovePaymentRemote = useCallback(async () => {
-    setIsSendingAcc(true);
-    setAccSuccessMessage(null);
+  // Trigger Remote Payment ACC Broadcast to Laptop from Operator Phone for specific package (5k vs 7k)
+  const handleApprovePaymentRemote = useCallback(
+    async (pkg: PricingPackage) => {
+      setIsSendingAcc(true);
+      setAccSuccessMessage(null);
 
-    try {
-      await broadcastSignalToLaptop('payment_approved', {
-        timestamp: Date.now(),
-        event_id: currentEventConfig.id,
-      });
+      try {
+        await broadcastSignalToLaptop('payment_approved', {
+          timestamp: Date.now(),
+          event_id: currentEventConfig.id,
+          package_id: pkg.id,
+          price: pkg.priceAmount,
+        });
 
-      setLunasCount((prev) => prev + 1);
-      setAccSuccessMessage(`✓ SUKSES! Sinyal Lunas ${currentEventConfig.priceText} dikirim ke Laptop (${currentEventConfig.name})!`);
-      setTimeout(() => setAccSuccessMessage(null), 4500);
-    } catch (err) {
-      console.error('Gagal mengirim sinyal ACC:', err);
-      setAccSuccessMessage('❌ Gagal mengirim sinyal. Coba tekan lagi.');
-      setTimeout(() => setAccSuccessMessage(null), 3000);
-    } finally {
-      setIsSendingAcc(false);
-    }
-  }, [currentEventConfig, broadcastSignalToLaptop]);
+        if (pkg.id === 'duo') {
+          setDuoCount((prev) => prev + 1);
+        } else {
+          setGroupCount((prev) => prev + 1);
+        }
+
+        setAccSuccessMessage(`✓ SUKSES! ACC Lunas ${pkg.priceText} (${pkg.personsText}) dikirim ke Laptop!`);
+        setTimeout(() => setAccSuccessMessage(null), 4500);
+      } catch (err) {
+        console.error('Gagal mengirim sinyal ACC:', err);
+        setAccSuccessMessage('❌ Gagal mengirim sinyal. Coba tekan lagi.');
+        setTimeout(() => setAccSuccessMessage(null), 3000);
+      } finally {
+        setIsSendingAcc(false);
+      }
+    },
+    [currentEventConfig, broadcastSignalToLaptop]
+  );
 
   // Trigger Remote Reset Session back to Welcome Screen
   const handleResetLaptopRemote = useCallback(async () => {
@@ -146,6 +159,9 @@ function OperatorContent() {
       setTimeout(() => setAccSuccessMessage(null), 3000);
     }
   }, [currentEventConfig, broadcastSignalToLaptop]);
+
+  const totalSesi = duoCount + groupCount;
+  const totalKasEstimasi = duoCount * 5000 + groupCount * 7000;
 
   return (
     <main className="min-h-screen bg-[#FFFDF5] text-[#161F33] p-4 sm:p-6 flex flex-col items-center justify-start select-none font-sans">
@@ -184,41 +200,47 @@ function OperatorContent() {
           </div>
         </div>
 
-        {/* Action Card: ACC Pembayaran */}
+        {/* Action Card: ACC Pembayaran Dinamis (5k vs 7k) */}
         <div className="bg-[#161F33] border border-[#D9A441] p-6 rounded-3xl shadow-xl text-white space-y-5">
           <div className="flex justify-between items-center">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#C8102E] text-white border border-[#D9A441]">
               📱 REMOTE KASIR PANITIA
             </span>
             <span className="text-xs font-bold bg-[#FBF2DF] text-[#161F33] px-3 py-1 rounded-full border border-[#E4D3A9]">
-              TARIF: {currentEventConfig.priceText}
+              TARIF: 5K / 7K
             </span>
           </div>
 
           <div className="space-y-1 text-left">
             <h2 className="text-xl sm:text-2xl font-black uppercase text-[#F0C878]">KONFIRMASI PEMBAYARAN</h2>
             <p className="text-xs sm:text-sm font-medium text-white/90 leading-relaxed">
-              Tekan tombol hijau di bawah setelah menerima konfirmasi uang tunai atau notifikasi QRIS DANA sebesar{' '}
-              <strong className="underline font-bold text-[#F0C878]">{currentEventConfig.priceText}</strong> ({currentEventConfig.name}).
+              Pilih tombol ACC di bawah sesuai paket konsumen yang membayar ({currentEventConfig.name}).
             </p>
           </div>
 
-          {/* Big Green ACC Button */}
-          <motion.button
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={handleApprovePaymentRemote}
-            disabled={isSendingAcc}
-            className="w-full py-5 rounded-2xl bg-[#00E676] hover:bg-[#00C853] text-black font-black text-xl sm:text-2xl border border-white shadow-lg uppercase tracking-wide cursor-pointer transition-all flex flex-col items-center justify-center gap-1 disabled:opacity-80"
-          >
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-white animate-ping border border-black/30"></span>
-              <span>{isSendingAcc ? 'MENGIRIM ACC...' : '✅ KONFIRMASI LUNAS'}</span>
-            </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-black/80 bg-white/80 px-3 py-0.5 rounded-full">
-              SEBESAR {currentEventConfig.priceText}
-            </span>
-          </motion.button>
+          {/* ACC Buttons for 5k and 7k */}
+          <div className="space-y-3 pt-1">
+            {currentEventConfig.packages.map((pkg) => (
+              <motion.button
+                key={pkg.id}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => handleApprovePaymentRemote(pkg)}
+                disabled={isSendingAcc}
+                className={`w-full py-4 rounded-2xl text-black font-black text-lg border border-white shadow-lg uppercase tracking-wide cursor-pointer transition-all flex flex-col items-center justify-center gap-0.5 disabled:opacity-80 ${
+                  pkg.id === 'duo' ? 'bg-[#00E676] hover:bg-[#00C853]' : 'bg-[#F0C878] hover:bg-[#D9A441]'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-3.5 h-3.5 rounded-full bg-white animate-ping border border-black/30"></span>
+                  <span>ACC LUNAS {pkg.priceText}</span>
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-black/80 bg-white/80 px-3 py-0.5 rounded-full">
+                  KAPASITAS {pkg.personsText}
+                </span>
+              </motion.button>
+            ))}
+          </div>
 
           <AnimatePresence>
             {accSuccessMessage && (
@@ -240,17 +262,27 @@ function OperatorContent() {
             📊 RINGKASAN KAS ({currentEventConfig.name})
           </h3>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#FBF2DF] p-3.5 rounded-2xl border border-[#E4D3A9] text-center">
-              <span className="text-[11px] font-bold text-[#161F33]/70 block uppercase">TOTAL FOTO LUNAS</span>
-              <span className="text-2xl font-black text-[#C8102E]">{lunasCount} Sesi</span>
+          <div className="grid grid-cols-2 gap-3 text-center">
+            <div className="bg-[#FBF2DF] p-3 rounded-2xl border border-[#E4D3A9]">
+              <span className="text-[10px] font-bold text-[#161F33]/70 block uppercase">DUO (5K - 1-2 ORANG)</span>
+              <span className="text-xl font-black text-[#C8102E]">{duoCount} Sesi</span>
             </div>
 
-            <div className="bg-[#FBF2DF] p-3.5 rounded-2xl border border-[#E4D3A9] text-center">
-              <span className="text-[11px] font-bold text-[#161F33]/70 block uppercase">ESTIMASI KAS</span>
+            <div className="bg-[#FBF2DF] p-3 rounded-2xl border border-[#E4D3A9]">
+              <span className="text-[10px] font-bold text-[#161F33]/70 block uppercase">RAME (7K - 3-5 ORANG)</span>
+              <span className="text-xl font-black text-[#C8102E]">{groupCount} Sesi</span>
+            </div>
+          </div>
+
+          <div className="bg-[#161F33] text-white p-4 rounded-2xl border border-[#D9A441] flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-bold text-[#F0C878] uppercase block">TOTAL KAS ESTIMASI ({totalSesi} SESI)</span>
               <span className="text-2xl font-black text-[#00E676]">
-                Rp {(lunasCount * currentEventConfig.priceAmount).toLocaleString('id-ID')}
+                Rp {totalKasEstimasi.toLocaleString('id-ID')}
               </span>
+            </div>
+            <div className="text-xs font-mono font-bold bg-[#FFFBF2] text-[#161F33] px-3 py-1.5 rounded-xl border border-[#E4D3A9]">
+              LUNAS: {totalSesi}
             </div>
           </div>
 

@@ -1,12 +1,38 @@
 import { FrameTemplate } from '@/lib/image/types';
 import { STATIC_FRAMES } from '@/lib/image/frames';
 
+export interface PricingPackage {
+  id: 'duo' | 'group';
+  label: string;
+  personsText: string;
+  priceAmount: number;
+  priceText: string;
+}
+
+export const DEFAULT_PRICING_PACKAGES: PricingPackage[] = [
+  {
+    id: 'duo',
+    label: 'Paket Duo (1 - 2 Orang)',
+    personsText: '1 - 2 Orang',
+    priceAmount: 5000,
+    priceText: 'Rp 5.000',
+  },
+  {
+    id: 'group',
+    label: 'Paket Rame (3 - 5 Orang)',
+    personsText: '3 - 5 Orang',
+    priceAmount: 7000,
+    priceText: 'Rp 7.000',
+  },
+];
+
 export interface EventConfig {
   id: string;
   name: string;
   subtitle: string;
   logoUrl: string;
   qrisUrl: string;
+  packages: PricingPackage[];
   priceAmount: number;
   priceText: string;
   storageFolder: string;
@@ -20,8 +46,9 @@ export const EVENTS_CONFIG: Record<string, EventConfig> = {
     subtitle: 'HUT RI 81 KARTA 02 SPECIAL',
     logoUrl: '/logo-karta.webp',
     qrisUrl: '/qris-karta.webp',
+    packages: DEFAULT_PRICING_PACKAGES,
     priceAmount: 7000,
-    priceText: 'Rp 7.000',
+    priceText: 'Rp 5.000 / Rp 7.000',
     storageFolder: 'fkpgr02',
     frames: STATIC_FRAMES,
   },
@@ -31,8 +58,9 @@ export const EVENTS_CONFIG: Record<string, EventConfig> = {
     subtitle: 'ACARA PUNCAK AGUSTUS KARTA GJA',
     logoUrl: '/logo-karta.webp', // Fallback until GJA official logo provided
     qrisUrl: '/qris-karta.webp', // Fallback until GJA official QRIS provided
+    packages: DEFAULT_PRICING_PACKAGES,
     priceAmount: 7000,
-    priceText: 'Rp 7.000',
+    priceText: 'Rp 5.000 / Rp 7.000',
     storageFolder: 'karta_gja',
     frames: STATIC_FRAMES.map((f) => ({
       ...f,

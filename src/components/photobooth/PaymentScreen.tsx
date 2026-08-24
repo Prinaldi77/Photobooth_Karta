@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getSupabaseClient } from '@/lib/supabase';
-import { EventConfig } from '@/config/events';
+import { EventConfig, PricingPackage, DEFAULT_PRICING_PACKAGES } from '@/config/events';
 
 interface PaymentScreenProps {
   eventConfig?: EventConfig;
@@ -21,10 +21,11 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   onPaymentSuccess,
   onBackToRetake,
 }) => {
+  const packages = eventConfig?.packages || DEFAULT_PRICING_PACKAGES;
+  const [selectedPackage, setSelectedPackage] = useState<PricingPackage>(packages[0]);
   const [paymentMethod, setPaymentMethod] = useState<'qris' | 'cash'>('qris');
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const priceText = eventConfig?.priceText || 'Rp 7.000';
   const qrisSrc = eventConfig?.qrisUrl || '/qris-karta.webp';
   const eventName = eventConfig?.name || 'KARANG TARUNA FKPGR 02';
 
@@ -43,8 +44,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       const channel = supabase.channel(name);
 
       channel
-        .on('broadcast', { event: 'payment_approved' }, () => {
+        .on('broadcast', { event: 'payment_approved' }, (payload) => {
           setIsVerifying(true);
+          console.log('[PaymentScreen] Sinyal Remote ACC diterima:', payload);
           setTimeout(() => {
             onPaymentSuccess();
           }, 400);
@@ -76,15 +78,43 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
             <span>💳 STEP 1 · PEMBAYARAN SESI PHOTOBOOTH</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-black text-[#161F33] uppercase tracking-tight">
-            LAKUKAN PEMBAYARAN
+            PILIH PAKET & PEMBAYARAN
           </h2>
           <p className="text-[#161F33]/80 text-sm sm:text-base font-bold max-w-xl">
-            Selesaikan pembayaran sebesar{' '}
-            <span className="bg-[#C8102E] text-[#FFFBF2] px-2.5 py-0.5 rounded-md border border-[#D9A441] font-black">
-              {priceText}
-            </span>{' '}
-            untuk membuka kamera photobooth & memulai 3 pose foto.
+            Pilih jumlah orang untuk menyesuaikan tarif sesi photobooth kamu.
           </p>
+        </div>
+
+        {/* Package Selector Cards (2 Persons vs 3-5 Persons) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto w-full">
+          {packages.map((pkg) => {
+            const isSelected = selectedPackage.id === pkg.id;
+            return (
+              <button
+                key={pkg.id}
+                type="button"
+                onClick={() => setSelectedPackage(pkg)}
+                className={`p-5 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
+                  isSelected
+                    ? 'bg-[#161F33] text-white border-[#D9A441] shadow-lg scale-[1.02]'
+                    : 'bg-[#FBF2DF] text-[#161F33] border-[#E4D3A9] hover:bg-[#E4D3A9]/40 shadow-xs'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md uppercase ${isSelected ? 'bg-[#C8102E] text-white' : 'bg-[#E4D3A9] text-[#161F33]'}`}>
+                    {pkg.personsText}
+                  </span>
+                  {isSelected && <span className="text-sm">✅</span>}
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base sm:text-lg uppercase">{pkg.label}</h3>
+                  <span className={`text-xl sm:text-2xl font-black block mt-1 ${isSelected ? 'text-[#F0C878]' : 'text-[#C8102E]'}`}>
+                    {pkg.priceText}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Content Grid: Ticket Summary Card (5 cols) + Payment Method Selector (7 cols) */}
@@ -97,7 +127,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                   🎟️ TIKET SESI PHOTOBOOTH
                 </span>
                 <span className="text-[11px] font-bold bg-[#161F33] text-[#F0C878] px-2.5 py-0.5 rounded-full">
-                  1 SESI FOTO
+                  {selectedPackage.personsText}
                 </span>
               </div>
 
@@ -110,6 +140,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
               {/* Package Features List */}
               <div className="space-y-2.5 pt-2">
+                <div className="flex items-center gap-2.5 text-xs font-bold text-[#161F33]">
+                  <span className="w-5 h-5 rounded-full bg-[#161F33] text-[#F0C878] flex items-center justify-center text-[10px] flex-none">👥</span>
+                  <span>Kapasitas {selectedPackage.personsText}</span>
+                </div>
                 <div className="flex items-center gap-2.5 text-xs font-bold text-[#161F33]">
                   <span className="w-5 h-5 rounded-full bg-[#161F33] text-[#F0C878] flex items-center justify-center text-[10px] flex-none">📸</span>
                   <span>3 Pose Foto HD Kamera Studio (Timer 5 Menit)</span>
@@ -131,8 +165,8 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
             {/* Price Badge Footer */}
             <div className="bg-[#161F33] text-white p-4 rounded-2xl border border-[#D9A441] text-center space-y-0.5">
-              <span className="text-[11px] font-bold text-[#F0C878] uppercase tracking-wider block">TOTAL TARIF PEMBAYARAN</span>
-              <span className="text-2xl font-black text-white">{priceText}</span>
+              <span className="text-[11px] font-bold text-[#F0C878] uppercase tracking-wider block">TOTAL TARIF {selectedPackage.personsText}</span>
+              <span className="text-3xl font-black text-white">{selectedPackage.priceText}</span>
             </div>
           </div>
 
@@ -175,13 +209,13 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={qrisSrc}
-                      alt={`QRIS DANA ${eventName} ${priceText}`}
+                      alt={`QRIS DANA ${eventName} ${selectedPackage.priceText}`}
                       className="w-full h-auto max-h-[300px] object-contain rounded-lg"
                     />
                   </div>
                   <div className="space-y-1">
                     <span className="text-lg font-black block uppercase text-[#F0C878]">
-                      SCAN QRIS SEBESAR: {priceText}
+                      SCAN QRIS SEBESAR: {selectedPackage.priceText} ({selectedPackage.personsText})
                     </span>
                     <p className="text-xs font-medium text-[#FFFBF2]/90">
                       Scan kode QRIS di atas menggunakan m-banking atau e-wallet (DANA, GoPay, OVO, ShopeePay, dll).
@@ -194,9 +228,11 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                     💵
                   </div>
                   <div className="space-y-2">
-                    <span className="text-2xl font-black block uppercase text-[#C8102E]">BAYAR TUNAI {priceText}</span>
+                    <span className="text-2xl font-black block uppercase text-[#C8102E]">
+                      BAYAR TUNAI {selectedPackage.priceText}
+                    </span>
                     <p className="text-sm font-bold text-[#161F33] leading-relaxed">
-                      Silakan serahkan uang tunai sebesar <strong className="underline">{priceText}</strong> kepada petugas panitia {eventName} di samping booth photobooth.
+                      Silakan serahkan uang tunai sebesar <strong className="underline">{selectedPackage.priceText}</strong> ({selectedPackage.personsText}) kepada panitia {eventName}.
                     </p>
                   </div>
                 </div>
