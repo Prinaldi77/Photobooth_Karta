@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
   --merah: #C8102E;
@@ -15,75 +16,33 @@
   --shadow-card: 0 18px 40px -18px rgba(22, 31, 51, 0.35);
 }
 
-@theme inline {
-  --font-sans: var(--font-jakarta), system-ui, sans-serif;
-  --font-display: var(--font-anton), sans-serif;
-  --font-mono: var(--font-space-mono), monospace;
-}
-
 body {
-  margin: 0;
-  background: var(--putih);
+  background-color: var(--putih);
   color: var(--navy);
-  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
 }
 
-/* subtle batik-dot texture on the page background */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
+.font-anton {
+  font-family: 'Anton', sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.font-mono-space {
+  font-family: 'Space Mono', monospace;
+}
+
+/* Subtle batik-dot background pattern */
+.bg-batik-dots {
   background-image: radial-gradient(circle, rgba(200, 16, 46, 0.05) 1.4px, transparent 1.4px);
   background-size: 22px 22px;
-  pointer-events: none;
-  z-index: 0;
 }
 
-.font-display {
-  font-family: var(--font-anton), sans-serif;
+/* Custom scrollbar hiding for frame selector */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
-
-.font-mono {
-  font-family: var(--font-space-mono), monospace;
-}
-
-/* Garland Bunting Flag Sway Animation */
-.flag {
-  transform-origin: top center;
-  animation: sway 3.4s ease-in-out infinite;
-}
-.flag:nth-child(odd) {
-  animation-duration: 3.9s;
-}
-.flag:nth-child(3n) {
-  animation-delay: 0.4s;
-}
-.flag:nth-child(4n) {
-  animation-delay: 0.9s;
-}
-@keyframes sway {
-  0%, 100% {
-    transform: rotate(-3.5deg);
-  }
-  50% {
-    transform: rotate(3.5deg);
-  }
-}
-
-/* Floating Photostrip Animation */
-@keyframes floaty {
-  0%, 100% {
-    transform: rotate(4.5deg) translateY(0);
-  }
-  50% {
-    transform: rotate(3deg) translateY(-9px);
-  }
-}
-.animate-floaty {
-  animation: floaty 6s ease-in-out infinite;
-}
-.animate-floaty-reverse {
-  animation: floaty 6s ease-in-out infinite reverse;
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -14,6 +14,7 @@ import { CameraPreviewScreen } from './CameraPreviewScreen';
 import { CaptureReviewScreen } from './CaptureReviewScreen';
 import { PaymentScreen } from './PaymentScreen';
 import { ResultSuccessScreen } from './ResultSuccessScreen';
+import { BuntingGarland } from '@/components/ui/BuntingGarland';
 
 export const PhotoboothContainer: React.FC = () => {
   const activeEvent = useActiveEvent();
@@ -363,129 +364,136 @@ export const PhotoboothContainer: React.FC = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#FFFDF5] text-black flex flex-col items-center justify-center p-4 sm:p-8 select-none font-sans">
+    <main className="min-h-screen bg-[#FFFBF2] bg-batik-dots text-[#161F33] flex flex-col items-center justify-start select-none font-sans">
       {/* State Machine UI Flow Router */}
       {currentState === 'IDLE' && <WelcomeScreen eventConfig={activeEvent} onStart={handleStartCamera} />}
 
-      {/* 1-Click Loading State */}
-      {currentState === 'REQUESTING_PERMISSION' && (
-        <div className="bg-white border-4 border-black p-10 rounded-3xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center space-y-6 max-w-md w-full text-center text-black">
-          <div className="w-14 h-14 border-4 border-[#0052FF] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="space-y-2">
-            <h3 className="text-2xl font-black uppercase">Mengakses Kamera...</h3>
-            <p className="text-slate-800 text-sm font-bold">
-              Memulai stream webcam dan menyiapkan sesi photobooth {activeEvent.name}.
-            </p>
+      {currentState !== 'IDLE' && (
+        <div className="w-full flex flex-col items-center">
+          <BuntingGarland />
+          <div className="p-4 sm:p-8 w-full max-w-5xl">
+            {/* 1-Click Loading State */}
+            {currentState === 'REQUESTING_PERMISSION' && (
+              <div className="bg-white border border-[#E4D3A9] p-10 rounded-3xl shadow-xl flex flex-col items-center justify-center space-y-6 max-w-md mx-auto w-full text-center text-[#161F33]">
+                <div className="w-14 h-14 border-4 border-[#C8102E] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-bold uppercase">Mengakses Kamera...</h3>
+                  <p className="text-[#161F33]/70 text-sm font-semibold">
+                    Memulai stream webcam dan menyiapkan sesi photobooth {activeEvent.name}.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Permission Error Screen */}
+            {currentState === 'CAMERA_ERROR' && (
+              <CameraPermissionScreen
+                isError={true}
+                errorMessage={errorMessage}
+                onRetry={handleStartCamera}
+                onCancel={handleResetSession}
+              />
+            )}
+
+            {(currentState === 'READY' || currentState === 'COUNTDOWN') && (
+              <CameraPreviewScreen
+                videoRef={videoRef}
+                isCountdownActive={isCountdownActive}
+                countdownCount={countdownCount}
+                currentPoseIndex={currentPoseIndex}
+                currentPosePreviewUrl={currentPosePreviewUrl}
+                gestureDetected={gestureDetected}
+                gestureName={gestureName}
+                isModelLoading={isModelLoading}
+                availableDevices={availableDevices}
+                selectedDeviceId={selectedDeviceId}
+                onDeviceChange={handleDeviceChange}
+                onTriggerCapture={handleStartSinglePoseCountdown}
+                onRetakePose={handleRetakeCurrentPose}
+                onConfirmPoseNext={handleConfirmCurrentPoseNext}
+                onCancel={handleResetSession}
+              />
+            )}
+
+            {(currentState === 'REVIEW' || currentState === 'PROCESSING') && (
+              <CaptureReviewScreen
+                imageSrc={processedResult?.previewUrl || null}
+                selectedFrameId={selectedFrame.id}
+                availableFrames={activeEvent.frames}
+                onSelectFrame={handleFrameChange}
+                onRetake={handleRetakeAll}
+                onConfirm={handleUploadPhoto}
+                isProcessing={isProcessingImage}
+              />
+            )}
+
+            {/* Uploading Progress State */}
+            {currentState === 'UPLOADING' && (
+              <div className="bg-white border border-[#E4D3A9] p-10 rounded-3xl shadow-xl flex flex-col items-center justify-center space-y-6 max-w-md mx-auto w-full text-center text-[#161F33]">
+                <div className="w-14 h-14 border-4 border-[#C8102E] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-bold uppercase">Mengunggah Foto...</h3>
+                  <p className="text-[#161F33]/70 text-sm font-semibold">
+                    Foto master 3 pose sedang dikirim, menyiapkan Halaman Pembayaran.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Upload Error / Failure UI with Retry */}
+            {currentState === 'UPLOAD_ERROR' && (
+              <div className="bg-white border border-[#E4D3A9] p-8 sm:p-10 rounded-3xl shadow-xl space-y-6 max-w-md mx-auto w-full text-center text-[#161F33]">
+                <div className="w-16 h-16 bg-[#C8102E] text-white border border-[#D9A441] rounded-full flex items-center justify-center mx-auto shadow-md">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-bold uppercase">Upload Gagal</h3>
+                  <p className="text-[#C8102E] text-sm font-bold bg-rose-100 p-3 rounded-xl border border-[#C8102E]/30">{errorMessage}</p>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleUploadPhoto}
+                    className="w-full py-4 rounded-full bg-[#C8102E] hover:bg-[#7C0C20] text-white font-bold text-base shadow-md uppercase transition-all cursor-pointer"
+                  >
+                    Coba Unggah Lagi (Retry)
+                  </button>
+                  <button
+                    onClick={handleRetakeAll}
+                    className="w-full py-3.5 rounded-full bg-[#FBF2DF] hover:bg-[#E4D3A9]/40 text-[#161F33] font-bold text-sm border border-[#E4D3A9] uppercase transition-all cursor-pointer"
+                  >
+                    Foto Ulang Semua
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: PAYMENT Screen */}
+            {currentState === 'PAYMENT' && (
+              <PaymentScreen
+                eventConfig={activeEvent}
+                imageSrc={processedResult?.previewUrl || null}
+                sessionCode={currentSession?.session_code}
+                sessionId={currentSession?.id}
+                onPaymentSuccess={handlePaymentApproved}
+                onBackToRetake={handleRetakeAll}
+              />
+            )}
+
+            {/* Step 6: SUCCESS Screen (QR Code Download HP) */}
+            {currentState === 'SUCCESS' && (
+              <ResultSuccessScreen
+                eventConfig={activeEvent}
+                imageSrc={processedResult?.masterUrl || processedResult?.previewUrl || null}
+                photoId={uploadedPhoto?.id}
+                driveUrl={uploadedPhoto?.drive_url}
+                sessionCode={currentSession?.session_code}
+                onNewSession={handleResetSession}
+              />
+            )}
           </div>
         </div>
-      )}
-
-      {/* Permission Error Screen */}
-      {currentState === 'CAMERA_ERROR' && (
-        <CameraPermissionScreen
-          isError={true}
-          errorMessage={errorMessage}
-          onRetry={handleStartCamera}
-          onCancel={handleResetSession}
-        />
-      )}
-
-      {(currentState === 'READY' || currentState === 'COUNTDOWN') && (
-        <CameraPreviewScreen
-          videoRef={videoRef}
-          isCountdownActive={isCountdownActive}
-          countdownCount={countdownCount}
-          currentPoseIndex={currentPoseIndex}
-          currentPosePreviewUrl={currentPosePreviewUrl}
-          gestureDetected={gestureDetected}
-          gestureName={gestureName}
-          isModelLoading={isModelLoading}
-          availableDevices={availableDevices}
-          selectedDeviceId={selectedDeviceId}
-          onDeviceChange={handleDeviceChange}
-          onTriggerCapture={handleStartSinglePoseCountdown}
-          onRetakePose={handleRetakeCurrentPose}
-          onConfirmPoseNext={handleConfirmCurrentPoseNext}
-          onCancel={handleResetSession}
-        />
-      )}
-
-      {(currentState === 'REVIEW' || currentState === 'PROCESSING') && (
-        <CaptureReviewScreen
-          imageSrc={processedResult?.previewUrl || null}
-          selectedFrameId={selectedFrame.id}
-          availableFrames={activeEvent.frames}
-          onSelectFrame={handleFrameChange}
-          onRetake={handleRetakeAll}
-          onConfirm={handleUploadPhoto}
-          isProcessing={isProcessingImage}
-        />
-      )}
-
-      {/* Uploading Progress State */}
-      {currentState === 'UPLOADING' && (
-        <div className="bg-white border-4 border-black p-10 rounded-3xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center space-y-6 max-w-md w-full text-center text-black">
-          <div className="w-14 h-14 border-4 border-[#0052FF] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="space-y-2">
-            <h3 className="text-2xl font-black uppercase">Mengunggah Foto...</h3>
-            <p className="text-slate-800 text-sm font-bold">
-              Foto master 3 pose sedang dikirim, menyiapkan Halaman Pembayaran.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Upload Error / Failure UI with Retry */}
-      {currentState === 'UPLOAD_ERROR' && (
-        <div className="bg-white border-4 border-black p-8 sm:p-10 rounded-3xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-6 max-w-md w-full text-center text-black">
-          <div className="w-16 h-16 bg-[#FF3366] text-white border-3 border-black rounded-full flex items-center justify-center mx-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-2xl font-black uppercase">Upload Gagal</h3>
-            <p className="text-[#FF3366] text-sm font-black bg-rose-100 p-3 rounded-xl border-2 border-black">{errorMessage}</p>
-          </div>
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={handleUploadPhoto}
-              className="w-full py-4 rounded-2xl bg-[#0052FF] hover:bg-[#0046DB] text-white font-black text-base border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase transition-all cursor-pointer"
-            >
-              Coba Unggah Lagi (Retry)
-            </button>
-            <button
-              onClick={handleRetakeAll}
-              className="w-full py-3.5 rounded-2xl bg-slate-200 hover:bg-slate-300 text-black font-black text-sm border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase transition-all cursor-pointer"
-            >
-              Foto Ulang Semua
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 5: PAYMENT Screen */}
-      {currentState === 'PAYMENT' && (
-        <PaymentScreen
-          eventConfig={activeEvent}
-          imageSrc={processedResult?.previewUrl || null}
-          sessionCode={currentSession?.session_code}
-          sessionId={currentSession?.id}
-          onPaymentSuccess={handlePaymentApproved}
-          onBackToRetake={handleRetakeAll}
-        />
-      )}
-
-      {/* Step 6: SUCCESS Screen (QR Code Download HP) */}
-      {currentState === 'SUCCESS' && (
-        <ResultSuccessScreen
-          eventConfig={activeEvent}
-          imageSrc={processedResult?.masterUrl || processedResult?.previewUrl || null}
-          photoId={uploadedPhoto?.id}
-          driveUrl={uploadedPhoto?.drive_url}
-          sessionCode={currentSession?.session_code}
-          onNewSession={handleResetSession}
-        />
       )}
     </main>
   );
