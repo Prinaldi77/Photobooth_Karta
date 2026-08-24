@@ -6,7 +6,7 @@ import { FilesetResolver, GestureRecognizer } from '@mediapipe/tasks-vision';
 export interface UseHandGestureOptions {
   enabled: boolean;
   onGesture5Detected: () => void;
-  holdTimeMs?: number; // Duration gesture must be held before trigger (default: 1200ms)
+  holdTimeMs?: number; // Duration gesture must be held before trigger (default: 400ms for instant response)
 }
 
 // Suppress harmless C++ WASM TFLite informational stdout/stderr logs from popping up in Next.js DevTools overlay
@@ -53,9 +53,9 @@ export function useHandGesture(
   const lastVideoTimeRef = useRef<number>(-1);
   const lastTimestampRef = useRef<number>(0);
 
-  const { enabled, onGesture5Detected, holdTimeMs = 1200 } = options;
+  const { enabled, onGesture5Detected, holdTimeMs = 400 } = options;
 
-  // Initialize MediaPipe GestureRecognizer
+  // Initialize MediaPipe GestureRecognizer with GPU -> CPU Fallback
   useEffect(() => {
     let isMounted = true;
 
@@ -64,17 +64,35 @@ export function useHandGesture(
         const vision = await FilesetResolver.forVisionTasks(
           'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
         );
-        const recognizer = await GestureRecognizer.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath:
-              'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task',
-            delegate: 'GPU',
-          },
-          runningMode: 'VIDEO',
-          numHands: 1,
-        });
 
-        if (isMounted) {
+        let recognizer: GestureRecognizer | null = null;
+
+        // Try GPU delegate first
+        try {
+          recognizer = await GestureRecognizer.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath:
+                'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task',
+              delegate: 'GPU',
+            },
+            runningMode: 'VIDEO',
+            numHands: 1,
+          });
+        } catch {
+          console.warn('[MediaPipe] GPU delegate unsupported or failed. Falling back to CPU delegate...');
+          // Fallback to CPU delegate for 100% universal compatibility
+          recognizer = await GestureRecognizer.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath:
+                'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task',
+              delegate: 'CPU',
+            },
+            runningMode: 'VIDEO',
+            numHands: 1,
+          });
+        }
+
+        if (isMounted && recognizer) {
           gestureRecognizerRef.current = recognizer;
           setIsModelLoading(false);
           console.log('[MediaPipe] GestureRecognizer loaded successfully.');
@@ -110,7 +128,7 @@ export function useHandGesture(
       if (videoRef.current && gestureRecognizerRef.current) {
         const video = videoRef.current;
 
-        // Ensure video is playing and frame timestamp has advanced
+        // Ensure video has loaded frames and is currently playing
         if (
           video.readyState >= 2 &&
           video.videoWidth > 0 &&
@@ -134,7 +152,13 @@ export function useHandGesture(
               const topGesture = results.gestures[0][0];
               currentGesture = topGesture.categoryName;
 
-              if (topGesture.categoryName === 'Open_Palm' && topGesture.score > 0.55) {
+              // Check for Open_Palm or 5-finger open hand gestures (confidence >= 0.35 for high sensitivity)
+              if (
+                (topGesture.categoryName === 'Open_Palm' ||
+                  topGesture.categoryName.toLowerCase().includes('palm') ||
+                  topGesture.categoryName === '5') &&
+                topGesture.score >= 0.35
+              ) {
                 detected5 = true;
               }
             }
