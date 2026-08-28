@@ -295,7 +295,7 @@ export default function KioskPage() {
         <div className="bg-white border-4 border-black p-6 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="text-left">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#00E676] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mb-1">
-              KARANG TARUNA FKPGR 02 — PHOTOBOOTH KIOSK
+              KARANG TARUNA FKPGR 02 — PHOTOBOOTH 
             </span>
             <h1 className="text-xl font-black text-black uppercase">
               Self-Service Kiosk (Pose {currentPoseIndex} / 3)

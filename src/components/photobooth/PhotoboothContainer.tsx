@@ -66,6 +66,67 @@ export const PhotoboothContainer: React.FC = () => {
     };
   }, []);
 
+  // Anti-Accidental Refresh Protection 1: Intercept browser reload & close attempts during active session
+  useEffect(() => {
+    if (currentState === 'IDLE' || currentState === 'SUCCESS') {
+      return;
+    }
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '⚠️ Sesi Photobooth sedang berlangsung! Yakin ingin me-refresh halaman? Foto yang diambil bisa terganggu.';
+      return e.returnValue;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [currentState]);
+
+  // Anti-Accidental Refresh Protection 2: Persist active session state to sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (currentState === 'IDLE' || currentState === 'SUCCESS') {
+        sessionStorage.removeItem('karta_active_session');
+      } else {
+        sessionStorage.setItem(
+          'karta_active_session',
+          JSON.stringify({
+            state: currentState,
+            sessionCode: currentSession?.session_code,
+            sessionId: currentSession?.id,
+            poseIndex: currentPoseIndex,
+            timerSeconds: sessionTimerSeconds,
+            timestamp: Date.now(),
+          })
+        );
+      }
+    }
+  }, [currentState, currentSession, currentPoseIndex, sessionTimerSeconds]);
+
+  // Auto-recovery on page load if user refreshed during PAYMENT or READY
+  useEffect(() => {
+    if (typeof window !== 'undefined' && currentState === 'IDLE') {
+      const savedSession = sessionStorage.getItem('karta_active_session');
+      if (savedSession) {
+        try {
+          const parsed = JSON.parse(savedSession);
+          // Only restore if session was active in last 5 minutes (300,000ms)
+          if (Date.now() - parsed.timestamp < 300000 && parsed.state) {
+            console.log('[PhotoboothContainer] Recovering active session after reload:', parsed.state);
+            if (parsed.state === 'PAYMENT' || parsed.state === 'READY') {
+              setCurrentState(parsed.state);
+              if (parsed.timerSeconds) setSessionTimerSeconds(parsed.timerSeconds);
+            }
+          }
+        } catch (e) {
+          console.warn('[PhotoboothContainer] Recovery notice:', e);
+        }
+      }
+    }
+  }, [currentState]);
+
   // Cleanup Object URLs on unmount or reset
   useEffect(() => {
     return () => {
@@ -80,6 +141,9 @@ export const PhotoboothContainer: React.FC = () => {
   const handleResetSession = useCallback(async () => {
     if (cameraAdapterRef.current) {
       await cameraAdapterRef.current.stop();
+    }
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('karta_active_session');
     }
     setRawPhotoBlobs([]);
     setCurrentPoseIndex(1);
