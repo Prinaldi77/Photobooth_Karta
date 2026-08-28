@@ -27,6 +27,11 @@ export const metadata: Metadata = {
     shortcut: "/logo-karta.webp",
     apple: "/logo-karta.webp",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Photobooth Karta",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
