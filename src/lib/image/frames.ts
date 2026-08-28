@@ -12,7 +12,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-pahlawan',
     name: 'HUT RI 81 Pahlawan (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-photobooth-hutri81-pahlawan.svg',
+    overlayUrl: '/frames/frame-photobooth-hutri81-pahlawan.png',
     borderColor: '#D9A441',
     aspectRatio: '1:3',
     isActive: true,
@@ -52,7 +52,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-6',
     name: 'Modern Bold (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-6.jpg',
+    overlayUrl: '/frames/frame-6.png',
     borderColor: '#FF9800',
     aspectRatio: '1:3',
     isActive: true,
@@ -132,7 +132,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-16',
     name: 'Kawaii Pink (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-16.jpg',
+    overlayUrl: '/frames/frame-16.png',
     borderColor: '#2196F3',
     aspectRatio: '1:3',
     isActive: true,
@@ -140,7 +140,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-17',
     name: 'Urban Streetwear (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-17.jpg',
+    overlayUrl: '/frames/frame-17.png',
     borderColor: '#4CAF50',
     aspectRatio: '1:3',
     isActive: true,
