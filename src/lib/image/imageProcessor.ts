@@ -3,23 +3,30 @@ import { ProcessedImageResult, FrameTemplate } from './types';
 const svgImageCache = new Map<string, HTMLImageElement>();
 
 /**
- * Helper to load a Blob or URL into an HTMLImageElement with in-memory caching
+ * Helper to load a Blob or URL into an HTMLImageElement with in-memory caching and Safari WebKit compatibility
  */
 async function loadImage(source: string | Blob): Promise<HTMLImageElement> {
   if (typeof source === 'string' && svgImageCache.has(source)) {
-    return svgImageCache.get(source)!;
+    const cached = svgImageCache.get(source)!;
+    if (cached.complete && cached.naturalWidth > 0) {
+      return cached;
+    }
   }
 
   const isBlob = source instanceof Blob;
   const url = isBlob ? URL.createObjectURL(source) : source;
   const img = new Image();
-  img.crossOrigin = 'anonymous';
+
+  // Only set crossOrigin for external cross-domain URLs to avoid WebKit local CORS issues
+  if (typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'))) {
+    img.crossOrigin = 'anonymous';
+  }
 
   return new Promise<HTMLImageElement>((resolve, reject) => {
     img.onload = () => {
       if (isBlob) {
         URL.revokeObjectURL(url);
-      } else {
+      } else if (typeof source === 'string') {
         svgImageCache.set(source, img);
       }
       resolve(img);
@@ -218,12 +225,12 @@ export async function compositePhotoPreview(
       drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 12);
     }
 
-    // 2. Draw SVG/PNG Frame Overlay SECOND on top of photos so borders & headers mask photo edges
+    // 2. Draw Frame Overlay SECOND on top of photos so borders & headers mask photo edges
     try {
-      const svgOverlayImg = await loadImage(frame.overlayUrl);
-      ctx.drawImage(svgOverlayImg, 0, 0, masterWidth, masterHeight);
+      const overlayImg = await loadImage(frame.overlayUrl);
+      ctx.drawImage(overlayImg, 0, 0, masterWidth, masterHeight);
     } catch (overlayErr) {
-      console.warn('[ImageProcessor] Gagal memuat SVG overlay preview:', overlayErr);
+      console.warn('[ImageProcessor] Gagal memuat overlay preview:', overlayErr);
     }
   }
 
@@ -360,21 +367,21 @@ export async function compositePhotoWithFrame(
       drawPhotoInSlot(img, rightSlots[i].x, rightSlots[i].y, slotWidth, slotHeight, borderRadius);
     }
 
-    // 2. Load & draw SVG Overlay Image SECOND on top so borders and headers mask photo edges
+    // 2. Load & draw Overlay Image SECOND on top so borders and headers mask photo edges
     try {
-      const svgOverlayImg = await loadImage(frame.overlayUrl);
-      ctx.drawImage(svgOverlayImg, 0, 0, masterWidth, masterHeight);
+      const overlayImg = await loadImage(frame.overlayUrl);
+      ctx.drawImage(overlayImg, 0, 0, masterWidth, masterHeight);
     } catch (overlayErr) {
-      console.warn('[ImageProcessor] Gagal memuat SVG overlay karta:', overlayErr);
+      console.warn('[ImageProcessor] Gagal memuat overlay karta:', overlayErr);
     }
   } else if (frame?.overlayUrl) {
-    // 3-Pose Strip Frames (frame-1, frame-2.svg through frame-17.svg)
+    // 3-Pose Strip Frames (frame-1, frame-2 through frame-17)
     const frameKey = frame.id.replace('gja-', '');
     const slots = (frameKey && FRAME_SLOTS_MAP[frameKey]) || (frame?.id && FRAME_SLOTS_MAP[frame.id]) || DEFAULT_STRIP_SLOTS;
     const isSingleStrip = frame.aspectRatio === '1:3';
 
     try {
-      const svgOverlayImg = await loadImage(frame.overlayUrl);
+      const overlayImg = await loadImage(frame.overlayUrl);
 
       if (isSingleStrip) {
         // Single Strip (1200 x 3600):
@@ -385,8 +392,8 @@ export async function compositePhotoWithFrame(
           drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 36);
         }
 
-        // 2. Draw SVG/PNG Frame Overlay SECOND on top of photos so borders & headers mask photo edges
-        ctx.drawImage(svgOverlayImg, 0, 0, 1200, 3600);
+        // 2. Draw Frame Overlay SECOND on top of photos so borders & headers mask photo edges
+        ctx.drawImage(overlayImg, 0, 0, 1200, 3600);
       } else {
         // Twin Strip (2400 x 3600):
         // 1. Draw photos FIRST into left & right slots
@@ -399,12 +406,12 @@ export async function compositePhotoWithFrame(
           drawPhotoInSlot(img, slot.x + 1200, slot.y, slot.w, slot.h, 36);
         }
 
-        // 2. Draw SVG/PNG Frame Overlay SECOND on top of photos
-        ctx.drawImage(svgOverlayImg, 0, 0, 1200, 3600);
-        ctx.drawImage(svgOverlayImg, 1200, 0, 1200, 3600);
+        // 2. Draw Frame Overlay SECOND on top of photos
+        ctx.drawImage(overlayImg, 0, 0, 1200, 3600);
+        ctx.drawImage(overlayImg, 1200, 0, 1200, 3600);
       }
     } catch (overlayErr) {
-      console.warn('[ImageProcessor] Gagal memuat SVG overlay:', overlayErr);
+      console.warn('[ImageProcessor] Gagal memuat overlay:', overlayErr);
     }
   } else {
     // Single Photo Standard Frame

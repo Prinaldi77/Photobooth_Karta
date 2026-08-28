@@ -20,7 +20,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-2',
     name: 'Classic Vintage (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-2.svg',
+    overlayUrl: '/frames/frame-2.png',
     borderColor: '#FF3366',
     aspectRatio: '1:3',
     isActive: true,
@@ -28,7 +28,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-3',
     name: 'Retro Aesthetic (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-3.svg',
+    overlayUrl: '/frames/frame-3.png',
     borderColor: '#FFE600',
     aspectRatio: '1:3',
     isActive: true,
@@ -36,7 +36,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-4',
     name: 'Minimalist Black (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-4.svg',
+    overlayUrl: '/frames/frame-4.png',
     borderColor: '#00C853',
     aspectRatio: '1:3',
     isActive: true,
@@ -44,7 +44,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-5',
     name: 'Fun & Playful (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-5.svg',
+    overlayUrl: '/frames/frame-5.png',
     borderColor: '#9C27B0',
     aspectRatio: '1:3',
     isActive: true,
@@ -52,7 +52,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-6',
     name: 'Modern Bold (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-6.svg',
+    overlayUrl: '/frames/frame-6.jpg',
     borderColor: '#FF9800',
     aspectRatio: '1:3',
     isActive: true,
@@ -60,7 +60,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-7',
     name: 'Elegant Pastel (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-7.svg',
+    overlayUrl: '/frames/frame-7.png',
     borderColor: '#00BCD4',
     aspectRatio: '1:3',
     isActive: true,
@@ -68,7 +68,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-8',
     name: 'Cyberpunk Vibe (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-8.svg',
+    overlayUrl: '/frames/frame-8.png',
     borderColor: '#E91E63',
     aspectRatio: '1:3',
     isActive: true,
@@ -76,7 +76,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-9',
     name: 'Summer Party (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-9.svg',
+    overlayUrl: '/frames/frame-9.png',
     borderColor: '#3F51B5',
     aspectRatio: '1:3',
     isActive: true,
@@ -84,7 +84,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-10',
     name: 'Neon Glow (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-10.svg',
+    overlayUrl: '/frames/frame-10.png',
     borderColor: '#8BC34A',
     aspectRatio: '1:3',
     isActive: true,
@@ -92,7 +92,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-11',
     name: 'Y2K Pop (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-11.svg',
+    overlayUrl: '/frames/frame-11.png',
     borderColor: '#FF5722',
     aspectRatio: '1:3',
     isActive: true,
@@ -100,7 +100,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-12',
     name: 'Film Roll (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-12.svg',
+    overlayUrl: '/frames/frame-12.png',
     borderColor: '#673AB7',
     aspectRatio: '1:3',
     isActive: true,
@@ -108,7 +108,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-13',
     name: 'Cute Doodle (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-13.svg',
+    overlayUrl: '/frames/frame-13.png',
     borderColor: '#009688',
     aspectRatio: '1:3',
     isActive: true,
@@ -116,7 +116,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-14',
     name: 'Monochrome Chic (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-14.svg',
+    overlayUrl: '/frames/frame-14.png',
     borderColor: '#CDDC39',
     aspectRatio: '1:3',
     isActive: true,
@@ -124,7 +124,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-15',
     name: 'Golden Celebration (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-15.svg',
+    overlayUrl: '/frames/frame-15.png',
     borderColor: '#EA4C89',
     aspectRatio: '1:3',
     isActive: true,
@@ -132,7 +132,7 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-16',
     name: 'Kawaii Pink (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-16.svg',
+    overlayUrl: '/frames/frame-16.jpg',
     borderColor: '#2196F3',
     aspectRatio: '1:3',
     isActive: true,
@@ -140,10 +140,9 @@ export const STATIC_FRAMES: FrameTemplate[] = [
   {
     id: 'frame-17',
     name: 'Urban Streetwear (Single Strip 3-Pose)',
-    overlayUrl: '/frames/frame-17.svg',
+    overlayUrl: '/frames/frame-17.jpg',
     borderColor: '#4CAF50',
     aspectRatio: '1:3',
     isActive: true,
   },
 ];
-
