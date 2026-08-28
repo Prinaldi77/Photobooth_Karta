@@ -47,21 +47,21 @@ interface SlotBox {
 }
 
 const DEFAULT_STRIP_SLOTS: SlotBox[] = [
-  { x: 80, y: 440, w: 1040, h: 810 },
-  { x: 80, y: 1335, w: 1040, h: 810 },
-  { x: 80, y: 2230, w: 1040, h: 810 },
+  { x: 80, y: 475, w: 1040, h: 846 },
+  { x: 80, y: 1371, w: 1040, h: 846 },
+  { x: 80, y: 2268, w: 1040, h: 846 },
 ];
 
 const FRAME_SLOTS_MAP: Record<string, SlotBox[]> = {
   'frame-1': [
-    { x: 80, y: 440, w: 1040, h: 810 },
-    { x: 80, y: 1335, w: 1040, h: 810 },
-    { x: 80, y: 2230, w: 1040, h: 810 },
+    { x: 80, y: 475, w: 1040, h: 846 },
+    { x: 80, y: 1371, w: 1040, h: 846 },
+    { x: 80, y: 2268, w: 1040, h: 846 },
   ],
   'frame-pahlawan': [
     { x: 108, y: 840, w: 984, h: 735 },
-    { x: 108, y: 1619, w: 984, h: 719 },
-    { x: 108, y: 2398, w: 984, h: 719 },
+    { x: 108, y: 1619, w: 984, h: 735 },
+    { x: 108, y: 2398, w: 984, h: 735 },
   ],
   'frame-2': [
     { x: 120, y: 189, w: 960, h: 810 },
@@ -498,7 +498,7 @@ export async function compositePhotoWithFrame(
     masterUrl,
     masterWidth,
     masterHeight,
-    masterSizeBytes: masterBlob.size,
+    masterSizeBytes: previewBlob.size,
     previewBlob,
     previewUrl,
     previewWidth,

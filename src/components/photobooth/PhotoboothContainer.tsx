@@ -105,7 +105,7 @@ export const PhotoboothContainer: React.FC = () => {
     }
   }, [currentState, currentSession, currentPoseIndex, sessionTimerSeconds]);
 
-  // Auto-recovery on page load if user refreshed during PAYMENT or READY
+  // Auto-recovery on page load if user refreshed during PAYMENT, READY, COUNTDOWN, or REVIEW
   useEffect(() => {
     if (typeof window !== 'undefined' && currentState === 'IDLE') {
       const savedSession = sessionStorage.getItem('karta_active_session');
@@ -115,7 +115,12 @@ export const PhotoboothContainer: React.FC = () => {
           // Only restore if session was active in last 5 minutes (300,000ms)
           if (Date.now() - parsed.timestamp < 300000 && parsed.state) {
             console.log('[PhotoboothContainer] Recovering active session after reload:', parsed.state);
-            if (parsed.state === 'PAYMENT' || parsed.state === 'READY') {
+            if (
+              parsed.state === 'PAYMENT' ||
+              parsed.state === 'READY' ||
+              parsed.state === 'COUNTDOWN' ||
+              parsed.state === 'REVIEW'
+            ) {
               setCurrentState(parsed.state);
               if (parsed.timerSeconds) setSessionTimerSeconds(parsed.timerSeconds);
             }
