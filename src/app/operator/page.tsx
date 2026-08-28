@@ -11,9 +11,10 @@ function OperatorContent() {
   const activeEvent = useActiveEvent();
   const [selectedEventId, setSelectedEventId] = useState<string>(activeEvent.id);
   const [isSendingAcc, setIsSendingAcc] = useState<boolean>(false);
+  const [isCleaningStorage, setIsCleaningStorage] = useState<boolean>(false);
   const [accSuccessMessage, setAccSuccessMessage] = useState<string | null>(null);
 
-  // Dynamic Cash Counters for Rp 5.000 (Duo 1-2 Persons) & Rp 7.000 (Group 3-5 Persons)
+  // Dynamic & Persistent Cash Counters for Rp 5.000 (Duo 1-2 Persons) & Rp 7.000 (Group 3-5 Persons)
   const [duoCount, setDuoCount] = useState<number>(0);
   const [groupCount, setGroupCount] = useState<number>(0);
   const [connectionStatus, setConnectionStatus] = useState<'CONNECTED' | 'CONNECTING' | 'ERROR'>('CONNECTING');
@@ -22,6 +23,7 @@ function OperatorContent() {
 
   // Active event object resolved from selection
   const currentEventConfig: EventConfig = EVENTS_CONFIG[selectedEventId] || activeEvent;
+  const storageKey = `karta_operator_kas_${currentEventConfig.id}`;
 
   // Sync selected event if activeEvent changes via URL
   useEffect(() => {
@@ -30,6 +32,26 @@ function OperatorContent() {
     }, 0);
     return () => clearTimeout(timer);
   }, [activeEvent.id]);
+
+  // Load persistent cash tally from localStorage on event change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setDuoCount(parsed.duoCount || 0);
+          setGroupCount(parsed.groupCount || 0);
+        } catch {
+          setDuoCount(0);
+          setGroupCount(0);
+        }
+      } else {
+        setDuoCount(0);
+        setGroupCount(0);
+      }
+    }
+  }, [currentEventConfig.id, storageKey]);
 
   // Maintain persistent, pre-subscribed Realtime Channels for 0ms broadcast delivery!
   useEffect(() => {
@@ -120,10 +142,29 @@ function OperatorContent() {
           price: pkg.priceAmount,
         });
 
+        // Update state and persist to localStorage so cash tally survives browser reloads & storage cleanups!
         if (pkg.id === 'duo') {
-          setDuoCount((prev) => prev + 1);
+          setDuoCount((prevDuo) => {
+            const nextDuo = prevDuo + 1;
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(
+                storageKey,
+                JSON.stringify({ duoCount: nextDuo, groupCount, updatedAt: Date.now() })
+              );
+            }
+            return nextDuo;
+          });
         } else {
-          setGroupCount((prev) => prev + 1);
+          setGroupCount((prevGroup) => {
+            const nextGroup = prevGroup + 1;
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(
+                storageKey,
+                JSON.stringify({ duoCount, groupCount: nextGroup, updatedAt: Date.now() })
+              );
+            }
+            return nextGroup;
+          });
         }
 
         setAccSuccessMessage(`✓ SUKSES! ACC Lunas ${pkg.priceText} (${pkg.personsText}) dikirim ke Laptop!`);
@@ -136,7 +177,7 @@ function OperatorContent() {
         setIsSendingAcc(false);
       }
     },
-    [currentEventConfig, broadcastSignalToLaptop]
+    [currentEventConfig, broadcastSignalToLaptop, storageKey, groupCount, duoCount]
   );
 
   // Trigger Remote Reset Session back to Welcome Screen
@@ -159,6 +200,61 @@ function OperatorContent() {
       setTimeout(() => setAccSuccessMessage(null), 3000);
     }
   }, [currentEventConfig, broadcastSignalToLaptop]);
+
+  // Reset Ringkasan Kas
+  const handleResetKasSummary = useCallback(() => {
+    if (
+      !confirm(
+        `Apakah Anda yakin ingin ME-RESET Statistik Ringkasan Kas (${currentEventConfig.name}) menjadi Rp 0?`
+      )
+    ) {
+      return;
+    }
+    setDuoCount(0);
+    setGroupCount(0);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(storageKey);
+    }
+    setAccSuccessMessage('✓ SUKSES! Ringkasan Kas berhasil di-reset ke Rp 0!');
+    setTimeout(() => setAccSuccessMessage(null), 3000);
+  }, [currentEventConfig.name, storageKey]);
+
+  // Clean Storage (Delete All Photos from Supabase Storage)
+  const handleCleanStorage = useCallback(async () => {
+    if (
+      !confirm(
+        `⚠️ KONFIRMASI HAPUS STORAGE FOTO ⚠️\n\nApakah Anda yakin ingin HAPUS SEMUA FOTO di Supabase Storage?\n\n(Catatan: Ringkasan Kas & Total Uang Kas TETAP AMAN dan TIDAK akan terhapus!)`
+      )
+    ) {
+      return;
+    }
+
+    setIsCleaningStorage(true);
+    setAccSuccessMessage('⏳ Sedang membersihkan storage Supabase...');
+
+    try {
+      const res = await fetch('/api/photos/cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: currentEventConfig.id }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setAccSuccessMessage(
+          `✓ SUKSES! ${data.data?.deleted_count || 0} file foto berhasil dibersihkan dari Storage! (Ringkasan Kas Tetap Utuh)`
+        );
+      } else {
+        setAccSuccessMessage(`❌ Gagal membersihkan storage: ${data.message}`);
+      }
+    } catch (err) {
+      console.error('Gagal membersihkan storage:', err);
+      setAccSuccessMessage('❌ Gagal terhubung ke server cleanup.');
+    } finally {
+      setIsCleaningStorage(false);
+      setTimeout(() => setAccSuccessMessage(null), 5000);
+    }
+  }, [currentEventConfig.id]);
 
   const totalSesi = duoCount + groupCount;
   const totalKasEstimasi = duoCount * 5000 + groupCount * 7000;
@@ -256,11 +352,16 @@ function OperatorContent() {
           </AnimatePresence>
         </div>
 
-        {/* Daily Summary & Control Actions */}
+        {/* Persistent Daily Summary & Control Actions */}
         <div className="bg-white border border-[#E4D3A9] p-5 rounded-3xl shadow-[0_15px_30px_-10px_rgba(22,31,51,0.12)] space-y-4 text-left">
-          <h3 className="text-sm font-bold uppercase text-[#161F33] border-b border-[#E4D3A9] pb-2">
-            📊 RINGKASAN KAS ({currentEventConfig.name})
-          </h3>
+          <div className="flex items-center justify-between border-b border-[#E4D3A9] pb-2">
+            <h3 className="text-sm font-bold uppercase text-[#161F33]">
+              📊 RINGKASAN KAS ({currentEventConfig.name})
+            </h3>
+            <span className="text-[10px] font-bold uppercase text-[#00C853] bg-[#E8F5E9] px-2 py-0.5 rounded-full">
+              TERSIMPAN PERMANEN
+            </span>
+          </div>
 
           <div className="grid grid-cols-2 gap-3 text-center">
             <div className="bg-[#FBF2DF] p-3 rounded-2xl border border-[#E4D3A9]">
@@ -286,7 +387,8 @@ function OperatorContent() {
             </div>
           </div>
 
-          <div className="pt-2">
+          {/* Management Buttons */}
+          <div className="space-y-2 pt-1">
             <button
               type="button"
               onClick={handleResetLaptopRemote}
@@ -294,6 +396,26 @@ function OperatorContent() {
             >
               🔄 RESET LAPTOP KE HALAMAN UTAMA
             </button>
+
+            <button
+              type="button"
+              onClick={handleResetKasSummary}
+              className="w-full py-3 rounded-xl bg-[#FFF3E0] hover:bg-[#FFE0B2] text-[#E65100] font-bold text-xs border border-[#FFB74D] uppercase cursor-pointer transition-all shadow-xs"
+            >
+              🗑️ RESET STATISTIK RINGKASAN KAS (SET KE RP 0)
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCleanStorage}
+              disabled={isCleaningStorage}
+              className="w-full py-3.5 rounded-xl bg-[#FFEBEE] hover:bg-[#FFCDD2] text-[#C8102E] font-black text-xs border border-[#EF9A9A] uppercase cursor-pointer transition-all shadow-xs disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <span>🧹 BERSIHKAN STORAGE FOTO (SUPABASE CLOUD)</span>
+            </button>
+            <span className="text-[10px] text-[#161F33]/60 italic block text-center">
+              *Membersihkan storage tidak akan menghapus Ringkasan Kas / Total Uang Anda.
+            </span>
           </div>
         </div>
 
