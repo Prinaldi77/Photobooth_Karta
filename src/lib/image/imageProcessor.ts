@@ -47,21 +47,26 @@ interface SlotBox {
 }
 
 const DEFAULT_STRIP_SLOTS: SlotBox[] = [
-  { x: 80, y: 475, w: 1040, h: 846 },
-  { x: 80, y: 1371, w: 1040, h: 846 },
-  { x: 80, y: 2268, w: 1040, h: 846 },
+  { x: 0, y: 475, w: 1200, h: 851 },
+  { x: 0, y: 1371, w: 1200, h: 851 },
+  { x: 0, y: 2268, w: 1200, h: 851 },
 ];
 
 const FRAME_SLOTS_MAP: Record<string, SlotBox[]> = {
   'frame-1': [
-    { x: 80, y: 475, w: 1040, h: 846 },
-    { x: 80, y: 1371, w: 1040, h: 846 },
-    { x: 80, y: 2268, w: 1040, h: 846 },
+    { x: 0, y: 475, w: 1200, h: 851 },
+    { x: 0, y: 1371, w: 1200, h: 851 },
+    { x: 0, y: 2268, w: 1200, h: 851 },
+  ],
+  'frame-1-karta-kemerdekaan': [
+    { x: 0, y: 475, w: 1200, h: 851 },
+    { x: 0, y: 1371, w: 1200, h: 851 },
+    { x: 0, y: 2268, w: 1200, h: 851 },
   ],
   'frame-pahlawan': [
-    { x: 108, y: 840, w: 984, h: 735 },
-    { x: 108, y: 1619, w: 984, h: 735 },
-    { x: 108, y: 2398, w: 984, h: 735 },
+    { x: 0, y: 840, w: 1200, h: 735 },
+    { x: 0, y: 1619, w: 1200, h: 735 },
+    { x: 0, y: 2398, w: 1200, h: 735 },
   ],
   'frame-2': [
     { x: 120, y: 189, w: 960, h: 810 },
@@ -184,11 +189,11 @@ export async function compositePhotoPreview(
     y: number,
     slotWidth: number,
     slotHeight: number,
-    borderRadius = 12
+    borderRadius = 0
   ) => {
     ctx.save();
     ctx.beginPath();
-    if (typeof ctx.roundRect === 'function') {
+    if (borderRadius > 0 && typeof ctx.roundRect === 'function') {
       ctx.roundRect(x * scale, y * scale, slotWidth * scale, slotHeight * scale, borderRadius);
     } else {
       ctx.rect(x * scale, y * scale, slotWidth * scale, slotHeight * scale);
@@ -222,7 +227,7 @@ export async function compositePhotoPreview(
     for (let i = 0; i < 3; i++) {
       const img = photoImages[i % photoImages.length];
       const slot = slots[i] || DEFAULT_STRIP_SLOTS[i];
-      drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 12);
+      drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 0);
     }
 
     // 2. Draw Frame Overlay SECOND on top of photos so borders & headers mask photo edges
@@ -311,11 +316,11 @@ export async function compositePhotoWithFrame(
     y: number,
     slotWidth: number,
     slotHeight: number,
-    borderRadius = 40
+    borderRadius = 0
   ) => {
     ctx.save();
     ctx.beginPath();
-    if (typeof ctx.roundRect === 'function') {
+    if (borderRadius > 0 && typeof ctx.roundRect === 'function') {
       ctx.roundRect(x, y, slotWidth, slotHeight, borderRadius);
     } else {
       ctx.rect(x, y, slotWidth, slotHeight);
@@ -389,7 +394,7 @@ export async function compositePhotoWithFrame(
         for (let i = 0; i < 3; i++) {
           const img = photoImages[i % photoImages.length];
           const slot = slots[i] || DEFAULT_STRIP_SLOTS[i];
-          drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 36);
+          drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 0);
         }
 
         // 2. Draw Frame Overlay SECOND on top of photos so borders & headers mask photo edges
@@ -401,9 +406,9 @@ export async function compositePhotoWithFrame(
           const img = photoImages[i % photoImages.length];
           const slot = slots[i] || DEFAULT_STRIP_SLOTS[i];
           // Left Strip Photo
-          drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 36);
+          drawPhotoInSlot(img, slot.x, slot.y, slot.w, slot.h, 0);
           // Right Strip Photo
-          drawPhotoInSlot(img, slot.x + 1200, slot.y, slot.w, slot.h, 36);
+          drawPhotoInSlot(img, slot.x + 1200, slot.y, slot.w, slot.h, 0);
         }
 
         // 2. Draw Frame Overlay SECOND on top of photos
