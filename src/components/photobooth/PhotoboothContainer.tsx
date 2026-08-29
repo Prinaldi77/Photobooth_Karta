@@ -18,6 +18,28 @@ import { BuntingGarland } from '@/components/ui/BuntingGarland';
 
 const TOTAL_SESSION_SECONDS = 300; // 5 Minutes Session Timeout Limit (300 Seconds)
 
+// Helper to convert Blob to Base64 Data URL for reload recovery
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
+// Helper to convert Base64 Data URL back to Blob
+const base64ToBlob = (base64: string): Blob => {
+  const parts = base64.split(';base64,');
+  const contentType = parts[0].split(':')[1] || 'image/jpeg';
+  const raw = window.atob(parts[1]);
+  const uInt8Array = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; ++i) {
+    uInt8Array[i] = raw.charCodeAt(i);
+  }
+  return new Blob([uInt8Array], { type: contentType });
+};
+
 export const PhotoboothContainer: React.FC = () => {
   const activeEvent = useActiveEvent();
 
@@ -84,11 +106,27 @@ export const PhotoboothContainer: React.FC = () => {
     };
   }, [currentState]);
 
+  // Save captured photo Blobs to sessionStorage whenever rawPhotoBlobs update
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (rawPhotoBlobs.length > 0) {
+        Promise.all(rawPhotoBlobs.map((blob) => blobToBase64(blob)))
+          .then((base64List) => {
+            sessionStorage.setItem('karta_captured_photos', JSON.stringify(base64List));
+          })
+          .catch((err) => console.warn('[PhotoboothContainer] Error caching photos:', err));
+      } else {
+        sessionStorage.removeItem('karta_captured_photos');
+      }
+    }
+  }, [rawPhotoBlobs]);
+
   // Anti-Accidental Refresh Protection 2: Persist active session state to sessionStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (currentState === 'IDLE' || currentState === 'SUCCESS') {
         sessionStorage.removeItem('karta_active_session');
+        sessionStorage.removeItem('karta_captured_photos');
       } else {
         sessionStorage.setItem(
           'karta_active_session',
@@ -98,12 +136,13 @@ export const PhotoboothContainer: React.FC = () => {
             sessionId: currentSession?.id,
             poseIndex: currentPoseIndex,
             timerSeconds: sessionTimerSeconds,
+            selectedFrameId: selectedFrame?.id,
             timestamp: Date.now(),
           })
         );
       }
     }
-  }, [currentState, currentSession, currentPoseIndex, sessionTimerSeconds]);
+  }, [currentState, currentSession, currentPoseIndex, sessionTimerSeconds, selectedFrame]);
 
   // Auto-recovery on page load if user refreshed during PAYMENT, READY, COUNTDOWN, or REVIEW
   useEffect(() => {
@@ -115,14 +154,39 @@ export const PhotoboothContainer: React.FC = () => {
           // Only restore if session was active in last 5 minutes (300,000ms)
           if (Date.now() - parsed.timestamp < 300000 && parsed.state) {
             console.log('[PhotoboothContainer] Recovering active session after reload:', parsed.state);
-            if (
-              parsed.state === 'PAYMENT' ||
-              parsed.state === 'READY' ||
-              parsed.state === 'COUNTDOWN' ||
-              parsed.state === 'REVIEW'
-            ) {
+
+            if (parsed.timerSeconds) setSessionTimerSeconds(parsed.timerSeconds);
+
+            // Recover captured photos if available
+            const savedPhotos = sessionStorage.getItem('karta_captured_photos');
+            let recoveredBlobs: Blob[] = [];
+
+            if (savedPhotos) {
+              try {
+                const base64List = JSON.parse(savedPhotos) as string[];
+                recoveredBlobs = base64List.map((b64) => base64ToBlob(b64));
+                if (recoveredBlobs.length > 0) {
+                  setRawPhotoBlobs(recoveredBlobs);
+                }
+              } catch (err) {
+                console.warn('[PhotoboothContainer] Error restoring captured photos:', err);
+              }
+            }
+
+            if (parsed.state === 'REVIEW' && recoveredBlobs.length > 0) {
+              const targetFrame =
+                activeEvent.frames.find((f) => f.id === parsed.selectedFrameId) ||
+                activeEvent.frames[0];
+              setSelectedFrame(targetFrame);
+              compositePhotoWithFrame(recoveredBlobs, targetFrame).then((result) => {
+                setProcessedResult((prev) => {
+                  revokeProcessedImageUrls(prev);
+                  return result;
+                });
+                setCurrentState('REVIEW');
+              });
+            } else if (parsed.state === 'PAYMENT' || parsed.state === 'READY') {
               setCurrentState(parsed.state);
-              if (parsed.timerSeconds) setSessionTimerSeconds(parsed.timerSeconds);
             }
           }
         } catch (e) {
@@ -130,7 +194,7 @@ export const PhotoboothContainer: React.FC = () => {
         }
       }
     }
-  }, [currentState]);
+  }, [currentState, activeEvent.frames]);
 
   // Cleanup Object URLs on unmount or reset
   useEffect(() => {
@@ -149,6 +213,7 @@ export const PhotoboothContainer: React.FC = () => {
     }
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('karta_active_session');
+      sessionStorage.removeItem('karta_captured_photos');
     }
     setRawPhotoBlobs([]);
     setCurrentPoseIndex(1);
